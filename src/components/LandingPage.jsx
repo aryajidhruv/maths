@@ -63,7 +63,7 @@ const LandingPage = () => {
             transition={{ duration: 0.8 }}
             className="relative"
           >
-            <div className="aspect-[4/3] bg-emerald-50 rounded-3xl border-4 border-emerald-100 flex items-center justify-center text-8xl shadow-2xl shadow-emerald-100 p-8 overflow-hidden">
+            <div className=" bg-emerald-50 rounded-3xl border-4 border-emerald-100 flex items-center justify-center text-8xl shadow-2xl shadow-emerald-100 p-8 overflow-hidden">
                <span className="opacity-10 absolute scale-[4] rotate-12 font-mono text-emerald-900">∫ dx f(x) lim θ² ∆∑</span>
                <span className="text-emerald-900 drop-shadow-lg">∑²</span>
             </div>
