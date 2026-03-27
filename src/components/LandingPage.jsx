@@ -1,8 +1,39 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
+import { Loader2 } from 'lucide-react'; // Added for a subtle loading state
+import { API_BASE_URL } from '../config';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [availableSemesters, setAvailableSemesters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // API Connection: Fetching semesters from your friend's 'cores' metadata
+  useEffect(() => {
+    const fetchSemesters = async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/metadata`, {
+          params: { of: 'cores' },
+          headers: { 'accept': 'application/json' }
+        });
+
+        // Extracting keys ("1", "2", etc.) and converting to numbers
+        const keys = Object.keys(response.data).map(k => parseInt(k));
+        setAvailableSemesters(keys.sort((a, b) => a - b));
+      } catch (err) {
+        console.error("API Sync Error:", err);
+        // Fallback to default 1-6 if API fails so UI doesn't stay empty
+        setAvailableSemesters([1, 2, 3, 4, 5, 6]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSemesters();
+  }, []);
 
   const features = [
     {title: "Centralized PYQs", desc: "Access 10 years of organized Previous Year Papers without digging through chaotic groups.", icon: "📚"},
@@ -91,7 +122,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Resource Grid Section (Now links to SemesterPage) */}
+      {/* Resource Grid Section - NOW API DRIVEN */}
       <section id="resources" className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
@@ -100,19 +131,26 @@ const LandingPage = () => {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[1, 2, 3, 4, 5, 6].map(sem => (
-              <button 
-                key={sem}
-                onClick={() => navigate(`/semester/${sem}`)} // This navigates to the new page
-                className="group relative bg-stone-50 border border-stone-200 p-8 rounded-3xl text-center hover:border-emerald-400 hover:bg-white transition-all overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-emerald-600 font-bold">→</span>
-                </div>
-                <h3 className="text-4xl font-black text-stone-900 mb-2 group-hover:text-emerald-700 transition-colors">0{sem}</h3>
-                <p className="text-sm font-bold text-stone-500 uppercase tracking-widest">Semester</p>
-              </button>
-            ))}
+            {loading ? (
+              <div className="col-span-full py-10 flex flex-col items-center text-stone-400">
+                <Loader2 className="animate-spin mb-2" />
+                <p className="text-xs font-bold uppercase tracking-widest">Syncing with xuzu.in...</p>
+              </div>
+            ) : (
+              availableSemesters.map(sem => (
+                <button 
+                  key={sem}
+                  onClick={() => navigate(`/semester/${sem}`)} 
+                  className="group relative bg-stone-50 border border-stone-200 p-8 rounded-3xl text-center hover:border-emerald-400 hover:bg-white transition-all overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-emerald-600 font-bold">→</span>
+                  </div>
+                  <h3 className="text-4xl font-black text-stone-900 mb-2 group-hover:text-emerald-700 transition-colors">0{sem}</h3>
+                  <p className="text-sm font-bold text-stone-500 uppercase tracking-widest">Semester</p>
+                </button>
+              ))
+            )}
           </div>
         </div>
       </section>
