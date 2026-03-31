@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, PlayCircle, FileText, Search, Loader2, AlertCircle, ChevronRight, X, StickyNote, Eye, List } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, BookOpen, PlayCircle, FileText, Search, 
+  Loader2, ChevronRight, X, StickyNote, Eye, List, 
+  Sparkles, Hash, Download 
+} from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const SemesterPage = () => {
   const { semId } = useParams();
@@ -11,18 +15,16 @@ const SemesterPage = () => {
   
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('pyqs'); 
   const [searchTerm, setSearchTerm] = useState('');
-
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [isYearModalOpen, setIsYearModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
-  
   const [units, setUnits] = useState([]);
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
 
+  // Logic remains identical to preserve functionality
   const getApiResourceType = (tab) => {
     switch (tab) {
       case 'notes': return 'notes';
@@ -45,7 +47,6 @@ const SemesterPage = () => {
     setIsUnitModalOpen(true);
     setLoadingUnits(true);
     setUnits([]); 
-    
     try {
       const response = await axios.get(`${API_BASE_URL}/metadata`, {
         params: { of: 'units', core_id: subject.id },
@@ -53,7 +54,7 @@ const SemesterPage = () => {
       });
       setUnits(Array.isArray(response.data) ? response.data : Object.values(response.data));
     } catch (err) {
-      setUnits(["Units metadata not available for this subject."]);
+      setUnits(["Units metadata not available."]);
     } finally {
       setLoadingUnits(false);
     }
@@ -90,7 +91,6 @@ const SemesterPage = () => {
   useEffect(() => {
     const fetchSemesterData = async () => {
       setLoading(true);
-      setError(null);
       try {
         const response = await axios.get(`${API_BASE_URL}/metadata`, {
           params: { of: 'cores' },
@@ -102,40 +102,59 @@ const SemesterPage = () => {
             id, name: name.charAt(0).toUpperCase() + name.slice(1), 
           })));
         }
-      } catch (err) {
-        setError("Could not load subjects from MathVault.");
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error(err); } finally { setLoading(false); }
     };
     fetchSemesterData();
   }, [semId]);
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans relative pb-10">
-      {/* Navigation - Responsive Padding */}
-      <nav className="bg-white border-b border-stone-200 px-4 md:px-6 py-4 sticky top-0 z-50 flex justify-between items-center">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-stone-600 font-bold hover:text-emerald-700 transition text-sm md:text-base">
-          <ArrowLeft size={18}/> <span className="hidden sm:inline">Back</span>
+    <div className="min-h-screen bg-[#fafaf9] font-sans relative pb-20 selection:bg-emerald-100">
+      
+      {/* 1. MATHEMATICAL GRID BACKGROUND */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]" 
+           style={{ backgroundImage: `linear-gradient(#065f46 1.5px, transparent 1.5px), linear-gradient(90deg, #065f46 1.5px, transparent 1.5px)`, backgroundSize: '40px 40px' }}>
+      </div>
+
+      {/* --- PREMIUM NAVIGATION --- */}
+      <nav className="bg-white/80 backdrop-blur-xl border-b border-stone-200/60 px-6 py-4 sticky top-0 z-[100] flex justify-between items-center shadow-sm">
+        <button onClick={() => navigate('/')} className="group flex items-center gap-2 text-stone-600 font-bold hover:text-emerald-700 transition">
+          <div className="p-2 bg-stone-100 rounded-xl group-hover:bg-emerald-50 transition-colors">
+            <ArrowLeft size={18}/>
+          </div>
+          <span className="hidden sm:inline text-sm font-black uppercase tracking-widest">The Vault</span>
         </button>
-        <h1 className="text-lg md:text-xl font-black">Semester 0{semId}</h1>
-        <div className="w-10"></div>
+        
+        <div className="flex flex-col items-center">
+           <h1 className="text-xl font-[1000] text-stone-900 tracking-tighter">SEMESTER 0{semId}</h1>
+           <div className="h-1 w-8 bg-emerald-500 rounded-full mt-0.5"></div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex flex-col items-end">
+            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-none">DU Mathematics</span>
+            <span className="text-[9px] font-bold text-emerald-600">v3.0.26</span>
+          </div>
+          <div className="bg-stone-950 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg font-black text-lg">∆</div>
+        </div>
       </nav>
 
-      <main className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-10">
-        {/* Tab Selection - Scrollable on mobile */}
-        <div className="flex gap-2 md:gap-3 mb-8 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      <main className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
+        
+        {/* --- DYNAMIC TABS --- */}
+        <div className="flex gap-2 md:gap-4 mb-10 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
           {[
-            {id:'pyqs', label:'PYQs', icon:<FileText size={18}/>}, 
+            {id:'pyqs', label:'Papers', icon:<FileText size={18}/>}, 
             {id:'notes', label:'Notes', icon:<StickyNote size={18}/>}, 
             {id:'syllabus', label:'Syllabus', icon:<BookOpen size={18}/>}, 
-            {id:'videos', label:'Videos', icon:<PlayCircle size={18}/>}
+            {id:'videos', label:'Lectures', icon:<PlayCircle size={18}/>}
           ].map(tab => (
             <button 
               key={tab.id} 
               onClick={() => setActiveTab(tab.id)} 
-              className={`flex items-center gap-2 px-5 md:px-6 py-3 rounded-2xl font-bold transition-all whitespace-nowrap text-sm md:text-base ${
-                activeTab === tab.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-stone-500 border border-stone-200'
+              className={`flex items-center gap-2.5 px-6 py-4 rounded-[1.5rem] font-black transition-all whitespace-nowrap text-xs uppercase tracking-[0.15em] ${
+                activeTab === tab.id 
+                ? 'bg-stone-950 text-white shadow-xl shadow-stone-200 translate-y-[-2px]' 
+                : 'bg-white text-stone-400 border border-stone-200 hover:border-emerald-300'
               }`}
             >
               {tab.icon} {tab.label}
@@ -143,59 +162,102 @@ const SemesterPage = () => {
           ))}
         </div>
 
-        {/* Search Input */}
-        <div className="relative mb-8 md:mb-10">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={20} />
+        {/* --- SEARCH WITH GLOW --- */}
+        <div className="relative mb-12">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={22} />
           <input 
             type="text" 
-            placeholder={`Search ${activeTab}...`} 
-            className="w-full pl-12 pr-6 py-3 md:py-4 bg-white border border-stone-200 rounded-2xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all shadow-sm" 
+            placeholder={`Filter through ${activeTab}...`} 
+            className="w-full pl-16 pr-8 py-5 md:py-6 bg-white border border-stone-200 rounded-[2.5rem] outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-sm font-medium text-stone-700" 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
+          <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:block">
+            <span className="bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-xl text-[10px] font-black text-stone-400 uppercase tracking-widest">
+              <Hash size={10} className="inline mr-1" /> {subjects.length} Subjects
+            </span>
+          </div>
         </div>
 
-        {/* Subjects Grid - 1 Col on Mobile, 2 Col on MD+ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {subjects.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map((subject) => (
-            <div key={subject.id} className="bg-white p-5 md:p-6 rounded-[2rem] border border-stone-200 hover:border-emerald-500 transition-all group shadow-sm">
-              <div className="flex justify-between items-start mb-6">
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                  {activeTab === 'videos' ? <PlayCircle size={22}/> : activeTab === 'notes' ? <StickyNote size={22}/> : <FileText size={22}/>}
+        {/* --- SUBJECT CARDS --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          <AnimatePresence mode='popLayout'>
+            {subjects
+              .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+              .map((subject, idx) => (
+              <motion.div 
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                key={subject.id} 
+                className="bg-white p-7 md:p-9 rounded-[3rem] border border-stone-200/60 hover:border-emerald-500/40 hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all group relative overflow-hidden"
+              >
+                {/* Visual Accent */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/40 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700"></div>
+                
+                <div className="flex justify-between items-start mb-8 relative z-10">
+                  <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                    {activeTab === 'videos' ? <PlayCircle size={24}/> : activeTab === 'notes' ? <StickyNote size={24}/> : <FileText size={24}/>}
+                  </div>
+                  <button 
+                    onClick={() => handleViewUnits(subject)}
+                    className="flex items-center gap-1.5 text-[10px] font-black bg-stone-100 px-4 py-2 rounded-xl text-stone-500 hover:bg-stone-900 hover:text-white transition-all"
+                  >
+                    <List size={14}/> STRUCTURE
+                  </button>
                 </div>
-                <button 
-                  onClick={() => handleViewUnits(subject)}
-                  className="flex items-center gap-1 text-[10px] font-black bg-stone-100 px-3 py-1.5 rounded-full text-stone-500 hover:bg-emerald-100 hover:text-emerald-700 transition-colors"
-                >
-                  <List size={12}/> UNITS
-                </button>
-              </div>
-              <h3 className="font-bold text-lg md:text-xl text-stone-900 mb-6 leading-tight min-h-[3rem]">{subject.name}</h3>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button onClick={() => handlePreviewClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-stone-100 text-stone-700 rounded-xl font-bold text-sm hover:bg-stone-200 transition-all active:scale-95"><Eye size={18} /> Preview</button>
-                <button onClick={() => handleAccessClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-stone-950 text-white rounded-xl font-bold text-sm hover:bg-emerald-600 transition-all active:scale-95">Open <ChevronRight size={18} /></button>
-              </div>
-            </div>
-          ))}
+
+                <h3 className="font-black text-2xl md:text-3xl text-stone-900 mb-10 leading-tight pr-6 relative z-10 tracking-tighter">
+                  {subject.name}
+                </h3>
+                
+                <div className="flex gap-4 relative z-10">
+                  <button onClick={() => handlePreviewClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-4 bg-stone-50 text-stone-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-100 transition-all active:scale-95">
+                    <Eye size={18} /> Preview
+                  </button>
+                  <button onClick={() => handleAccessClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-950 transition-all shadow-lg shadow-emerald-100 active:scale-95">
+                    {activeTab === 'pyqs' ? <Download size={18}/> : <ChevronRight size={18}/>} 
+                    {activeTab === 'pyqs' ? 'Fetch' : 'Open'}
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </main>
 
-      {/* --- UNITS MODAL (Full screen on mobile) --- */}
+      {/* --- UNITS MODAL (Professional Drawer Style) --- */}
       <AnimatePresence>
         {isUnitModalOpen && (
           <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-stone-900/60 backdrop-blur-md">
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-lg rounded-t-[2rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl relative max-h-[90vh] overflow-hidden flex flex-col">
-              <button onClick={() => setIsUnitModalOpen(false)} className="absolute top-4 right-4 p-2 text-stone-400 hover:text-stone-900"><X size={24} /></button>
-              <h2 className="text-xl md:text-2xl font-black mb-1 pr-8">{selectedSubject?.name}</h2>
-              <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest mb-6">Subject Curriculum</p>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="bg-white w-full max-w-xl rounded-t-[3rem] sm:rounded-[3rem] p-8 md:p-10 shadow-2xl relative max-h-[85vh] overflow-hidden flex flex-col">
+              <div className="w-12 h-1.5 bg-stone-200 rounded-full mx-auto mb-6 sm:hidden" />
+              <button onClick={() => setIsUnitModalOpen(false)} className="absolute top-8 right-8 p-2 text-stone-400 hover:text-stone-900 hover:rotate-90 transition-all"><X size={28} /></button>
               
-              <div className="flex-1 overflow-y-auto space-y-3 pb-6">
-                {loadingUnits ? <div className="flex flex-col items-center py-10 text-stone-400"><Loader2 className="animate-spin mb-2" /> <p className="text-xs font-bold">LOADING...</p></div> : 
+              <div className="flex items-center gap-2 text-emerald-600 mb-2">
+                <Sparkles size={16}/>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Detailed Syllabus</span>
+              </div>
+              <h2 className="text-3xl font-black mb-8 text-stone-950 leading-none tracking-tighter">{selectedSubject?.name}</h2>
+              
+              <div className="flex-1 overflow-y-auto space-y-4 pb-10 pr-2">
+                {loadingUnits ? (
+                  <div className="flex flex-col items-center py-20 text-stone-400">
+                    <Loader2 className="animate-spin mb-4" size={32} />
+                    <p className="text-[10px] font-black tracking-widest uppercase">Synthesizing metadata...</p>
+                  </div>
+                ) : 
                   units.map((unit, idx) => (
-                    <div key={idx} className="p-4 bg-stone-50 border border-stone-100 rounded-2xl flex items-start gap-4">
-                      <span className="bg-white border border-stone-200 text-stone-400 w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0">{idx + 1}</span>
-                      <p className="text-stone-700 text-sm font-semibold">{unit}</p>
-                    </div>
+                    <motion.div 
+                      initial={{ opacity: 0, x: -10 }} 
+                      animate={{ opacity: 1, x: 0 }} 
+                      transition={{ delay: idx * 0.08 }}
+                      key={idx} 
+                      className="p-6 bg-stone-50 border border-stone-200/50 rounded-3xl flex items-start gap-5 hover:bg-white hover:border-emerald-200 transition-all"
+                    >
+                      <span className="bg-white border border-stone-200 text-stone-950 w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm">{idx + 1}</span>
+                      <p className="text-stone-700 text-sm font-bold leading-relaxed">{unit}</p>
+                    </motion.div>
                   ))
                 }
               </div>
@@ -204,16 +266,20 @@ const SemesterPage = () => {
         )}
       </AnimatePresence>
 
-      {/* --- YEAR MODAL --- */}
+      {/* --- YEAR SELECTION MODAL --- */}
       <AnimatePresence>
         {isYearModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-stone-900/60 backdrop-blur-sm">
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl relative">
-              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-4 right-4 text-stone-400 hover:text-stone-900"><X size={24} /></button>
-              <h2 className="text-xl md:text-2xl font-black mb-6">Select Year</h2>
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
+          <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-stone-900/60 backdrop-blur-sm">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-10 shadow-2xl relative">
+              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-8 right-8 text-stone-400 hover:text-stone-900 transition-colors"><X size={28} /></button>
+              <h2 className="text-3xl font-black mb-1 tracking-tighter leading-none">Select Year</h2>
+              <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-10">Available Academic Batch</p>
+              
+              <div className="grid grid-cols-2 gap-4">
                 {['2021', '2022', '2023', '2024'].map((year) => (
-                  <button key={year} onClick={() => handleYearSelection(year)} className="py-4 bg-stone-50 border border-stone-200 rounded-2xl font-bold hover:bg-emerald-600 hover:text-white transition-all active:scale-95">{year}</button>
+                  <button key={year} onClick={() => handleYearSelection(year)} className="group py-6 bg-stone-50 border border-stone-200 rounded-[2rem] font-black text-stone-900 hover:bg-emerald-600 hover:text-white hover:scale-[1.02] transition-all active:scale-95 shadow-sm">
+                    {year}
+                  </button>
                 ))}
               </div>
             </motion.div>
@@ -221,16 +287,19 @@ const SemesterPage = () => {
         )}
       </AnimatePresence>
 
-      {/* --- PREVIEW OVERLAY --- */}
+      {/* --- FULLSCREEN PREVIEW --- */}
       <AnimatePresence>
         {previewUrl && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[130] bg-stone-900 flex flex-col">
-            <div className="p-4 flex justify-between items-center bg-stone-900 text-white">
-              <span className="font-bold text-xs md:text-sm truncate pr-4">Preview: {selectedSubject?.name}</span>
-              <button onClick={() => setPreviewUrl(null)} className="p-2 hover:bg-stone-800 rounded-full transition-colors"><X size={24} /></button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-stone-900 flex flex-col">
+            <div className="p-4 md:p-6 flex justify-between items-center bg-stone-900 text-white border-b border-white/10">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-xs shadow-lg">PDF</div>
+                <span className="font-bold text-xs md:text-sm truncate max-w-[200px] md:max-w-md">{selectedSubject?.name}</span>
+              </div>
+              <button onClick={() => setPreviewUrl(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
             </div>
-            <div className="flex-1 w-full bg-stone-800 overflow-hidden">
-              <iframe src={previewUrl} className="w-full h-full border-none shadow-2xl" title="PDF Preview" />
+            <div className="flex-1 w-full bg-stone-800">
+              <iframe src={previewUrl} className="w-full h-full border-none" title="PDF Preview" />
             </div>
           </motion.div>
         )}
