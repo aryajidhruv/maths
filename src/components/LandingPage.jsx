@@ -1,28 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; // Added AnimatePresence
 import axios from 'axios';
 import { Loader2, Menu, X, ArrowUpRight, Zap, BookOpen, Users } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [availableSemesters, setAvailableSemesters] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  // 1. FIXED: Initialize from localStorage to prevent "disappearing" bug on back-navigation
+  const [availableSemesters, setAvailableSemesters] = useState(() => {
+    const saved = localStorage.getItem('vault_semesters');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Only show loading if we don't have cached semesters
+  const [loading, setLoading] = useState(availableSemesters.length === 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchSemesters = async () => {
-      setLoading(true);
+      // Don't trigger a flickering loader if we already have data in state
+      if (availableSemesters.length === 0) setLoading(true);
+
       try {
         const response = await axios.get(`${API_BASE_URL}/metadata`, {
           params: { of: 'cores' },
           headers: { 'accept': 'application/json' }
         });
         const keys = Object.keys(response.data).map(k => parseInt(k));
-        setAvailableSemesters(keys.sort((a, b) => a - b));
+        const sortedKeys = keys.sort((a, b) => a - b);
+        
+        setAvailableSemesters(sortedKeys);
+        // Save to cache for instant recovery on back-navigation
+        localStorage.setItem('vault_semesters', JSON.stringify(sortedKeys));
       } catch (err) {
-        setAvailableSemesters([1, 2, 3, 4, 5, 6]);
+        console.error("API Error, using fallback:", err);
+        if (availableSemesters.length === 0) setAvailableSemesters([1, 2, 3, 4, 5, 6]);
       } finally {
         setLoading(false);
       }
@@ -36,7 +50,6 @@ const LandingPage = () => {
     {title: "Student-Led", desc: "Built by DU Math students who understand the specific exam patterns.", icon: "🎓"},
   ];
 
-  // Animation variants for the grid
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -53,12 +66,12 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-[#fafaf9] font-sans selection:bg-emerald-100 scroll-smooth overflow-x-hidden">
       
-      {/* 1. ADDED: MATHEMATICAL GRID BACKGROUND */}
+      {/* MATHEMATICAL GRID BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" 
            style={{ backgroundImage: `linear-gradient(#065f46 1px, transparent 1px), linear-gradient(90deg, #065f46 1px, transparent 1px)`, backgroundSize: '40px 40px' }}>
       </div>
 
-      {/* --- RESPONSIVE NAVIGATION (Glassmorphism) --- */}
+      {/* --- RESPONSIVE NAVIGATION --- */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-stone-200 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-2 md:gap-3 cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
           <div className="bg-emerald-600 text-white w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl md:rounded-2xl font-black text-xl md:text-2xl shadow-lg group-hover:rotate-12 transition-transform">
@@ -81,15 +94,23 @@ const LandingPage = () => {
           {isMenuOpen ? <X size={28}/> : <Menu size={28}/>}
         </button>
 
-        {isMenuOpen && (
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="absolute top-full left-0 w-full bg-white border-b border-stone-200 p-6 flex flex-col gap-6 md:hidden shadow-xl font-bold">
-            <a href="#resources" onClick={() => setIsMenuOpen(false)}>PYQs</a>
-            <a href="#why" onClick={() => setIsMenuOpen(false)}>Contribute</a>
-          </motion.div>
-        )}
+        {/* Improved Menu Animation to prevent layout shifting */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-full left-0 w-full bg-white border-b border-stone-200 p-6 flex flex-col gap-6 md:hidden shadow-xl font-bold z-50"
+            >
+              <a href="#resources" onClick={() => setIsMenuOpen(false)}>PYQs</a>
+              <a href="#why" onClick={() => setIsMenuOpen(false)}>Contribute</a>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
-      {/* --- HERO SECTION (Enhanced with Floating Symbols) --- */}
+      {/* --- HERO SECTION --- */}
       <header className="relative py-16 md:py-32 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
@@ -110,7 +131,6 @@ const LandingPage = () => {
             </div>
           </motion.div>
 
-          {/* Graphic: More Abstract/Premium */}
           <div className="relative hidden lg:block">
             <motion.div animate={{ y: [0, -20, 0] }} transition={{ duration: 4, repeat: Infinity }} className="bg-white rounded-[4rem] border border-stone-200 shadow-2xl p-20 flex items-center justify-center relative overflow-hidden">
                <div className="absolute inset-0 bg-emerald-50/50"></div>
@@ -122,7 +142,7 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* 2. ADDED: MINI STATS BAR */}
+      {/* --- MINI STATS BAR --- */}
       <section className="max-w-6xl mx-auto px-6 py-10">
         <div className="bg-white border border-stone-200 rounded-[2.5rem] p-8 md:p-12 grid grid-cols-1 md:grid-cols-3 gap-8 shadow-sm">
             <div className="flex items-center gap-4">
@@ -159,7 +179,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* --- SEMESTER GRID (Staggered Animation) --- */}
+      {/* --- SEMESTER GRID (With Persistence Fix) --- */}
       <section id="resources" className="py-24 bg-stone-950 rounded-t-[4rem] text-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-20">

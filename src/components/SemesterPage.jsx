@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, BookOpen, PlayCircle, FileText, Search, 
   Loader2, ChevronRight, X, StickyNote, Eye, List, 
-  Sparkles, Hash, Download 
+  Sparkles, Hash, Download, Layout 
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -24,15 +24,9 @@ const SemesterPage = () => {
   const [loadingUnits, setLoadingUnits] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
 
-  // Logic remains identical to preserve functionality
   const getApiResourceType = (tab) => {
-    switch (tab) {
-      case 'notes': return 'notes';
-      case 'syllabus': return 'notes';
-      case 'videos': return 'v_refs';
-      case 'pyqs': return 'pyqs';
-      default: return 'notes';
-    }
+    const types = { notes: 'notes', syllabus: 'notes', videos: 'v_refs', pyqs: 'pyqs' };
+    return types[tab] || 'notes';
   };
 
   const getResourceUrl = (subjectId, year = null) => {
@@ -42,11 +36,15 @@ const SemesterPage = () => {
     return url;
   };
 
+  const filteredSubjects = useMemo(() => {
+    return subjects.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [subjects, searchTerm]);
+
+  // Renamed function to reflect Unit terminology
   const handleViewUnits = async (subject) => {
     setSelectedSubject(subject);
     setIsUnitModalOpen(true);
     setLoadingUnits(true);
-    setUnits([]); 
     try {
       const response = await axios.get(`${API_BASE_URL}/metadata`, {
         params: { of: 'units', core_id: subject.id },
@@ -108,34 +106,28 @@ const SemesterPage = () => {
   }, [semId]);
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] font-sans relative pb-20 selection:bg-emerald-100">
+    <div className="min-h-screen bg-[#fafaf9] font-sans relative pb-20 selection:bg-emerald-100 overflow-x-hidden">
       
-      {/* 1. MATHEMATICAL GRID BACKGROUND */}
+      {/* MATHEMATICAL GRID BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]" 
            style={{ backgroundImage: `linear-gradient(#065f46 1.5px, transparent 1.5px), linear-gradient(90deg, #065f46 1.5px, transparent 1.5px)`, backgroundSize: '40px 40px' }}>
       </div>
 
-      {/* --- PREMIUM NAVIGATION --- */}
+      {/* --- NAVIGATION --- */}
       <nav className="bg-white/80 backdrop-blur-xl border-b border-stone-200/60 px-6 py-4 sticky top-0 z-[100] flex justify-between items-center shadow-sm">
         <button onClick={() => navigate('/')} className="group flex items-center gap-2 text-stone-600 font-bold hover:text-emerald-700 transition">
           <div className="p-2 bg-stone-100 rounded-xl group-hover:bg-emerald-50 transition-colors">
             <ArrowLeft size={18}/>
           </div>
-          <span className="hidden sm:inline text-sm font-black uppercase tracking-widest">The Vault</span>
+          <span className="hidden sm:inline text-xs font-black uppercase tracking-widest">Vault</span>
         </button>
         
         <div className="flex flex-col items-center">
-           <h1 className="text-xl font-[1000] text-stone-900 tracking-tighter">SEMESTER 0{semId}</h1>
-           <div className="h-1 w-8 bg-emerald-500 rounded-full mt-0.5"></div>
+           <h1 className="text-xl font-[1000] text-stone-900 tracking-tighter">SEM 0{semId}</h1>
+           <div className="h-1 w-6 bg-emerald-500 rounded-full mt-0.5"></div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end">
-            <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-none">DU Mathematics</span>
-            <span className="text-[9px] font-bold text-emerald-600">v3.0.26</span>
-          </div>
-          <div className="bg-stone-950 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg font-black text-lg">∆</div>
-        </div>
+        <div className="bg-stone-950 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg font-black text-lg">∆</div>
       </nav>
 
       <main className="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-12 relative z-10">
@@ -153,7 +145,7 @@ const SemesterPage = () => {
               onClick={() => setActiveTab(tab.id)} 
               className={`flex items-center gap-2.5 px-6 py-4 rounded-[1.5rem] font-black transition-all whitespace-nowrap text-xs uppercase tracking-[0.15em] ${
                 activeTab === tab.id 
-                ? 'bg-stone-950 text-white shadow-xl shadow-stone-200 translate-y-[-2px]' 
+                ? 'bg-stone-950 text-white shadow-xl shadow-stone-200 -translate-y-1' 
                 : 'bg-white text-stone-400 border border-stone-200 hover:border-emerald-300'
               }`}
             >
@@ -162,61 +154,45 @@ const SemesterPage = () => {
           ))}
         </div>
 
-        {/* --- SEARCH WITH GLOW --- */}
+        {/* --- SEARCH BAR --- */}
         <div className="relative mb-12">
           <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-300" size={22} />
           <input 
             type="text" 
-            placeholder={`Filter through ${activeTab}...`} 
-            className="w-full pl-16 pr-8 py-5 md:py-6 bg-white border border-stone-200 rounded-[2.5rem] outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-sm font-medium text-stone-700" 
+            placeholder={`Filter ${activeTab}...`} 
+            className="w-full pl-16 pr-8 py-5 bg-white border border-stone-200 rounded-[2.5rem] outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all shadow-sm font-medium" 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
-          <div className="absolute right-6 top-1/2 -translate-y-1/2 hidden md:block">
-            <span className="bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-xl text-[10px] font-black text-stone-400 uppercase tracking-widest">
-              <Hash size={10} className="inline mr-1" /> {subjects.length} Subjects
-            </span>
-          </div>
         </div>
 
         {/* --- SUBJECT CARDS --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           <AnimatePresence mode='popLayout'>
-            {subjects
-              .filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
-              .map((subject, idx) => (
+            {filteredSubjects.map((subject, idx) => (
               <motion.div 
                 layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
                 key={subject.id} 
-                className="bg-white p-7 md:p-9 rounded-[3rem] border border-stone-200/60 hover:border-emerald-500/40 hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all group relative overflow-hidden"
+                className="bg-white p-7 md:p-9 rounded-[3rem] border border-stone-200/60 hover:border-emerald-500/40 hover:shadow-2xl transition-all group relative overflow-hidden"
               >
-                {/* Visual Accent */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50/40 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700"></div>
-                
                 <div className="flex justify-between items-start mb-8 relative z-10">
                   <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-sm">
                     {activeTab === 'videos' ? <PlayCircle size={24}/> : activeTab === 'notes' ? <StickyNote size={24}/> : <FileText size={24}/>}
                   </div>
-                  <button 
-                    onClick={() => handleViewUnits(subject)}
-                    className="flex items-center gap-1.5 text-[10px] font-black bg-stone-100 px-4 py-2 rounded-xl text-stone-500 hover:bg-stone-900 hover:text-white transition-all"
-                  >
-                    <List size={14}/> STRUCTURE
+                  {/* UPDATED: Renamed from Structure to Units */}
+                  <button onClick={() => handleViewUnits(subject)} className="text-[10px] font-black bg-stone-100 px-4 py-2 rounded-xl text-stone-500 hover:bg-stone-900 hover:text-white transition-all uppercase tracking-widest">
+                    Units
                   </button>
                 </div>
-
-                <h3 className="font-black text-2xl md:text-3xl text-stone-900 mb-10 leading-tight pr-6 relative z-10 tracking-tighter">
-                  {subject.name}
-                </h3>
-                
+                <h3 className="font-black text-2xl md:text-3xl text-stone-900 mb-10 tracking-tighter leading-tight">{subject.name}</h3>
                 <div className="flex gap-4 relative z-10">
-                  <button onClick={() => handlePreviewClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-4 bg-stone-50 text-stone-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-100 transition-all active:scale-95">
-                    <Eye size={18} /> Preview
+                  <button onClick={() => handlePreviewClick(subject)} className="flex-1 py-4 bg-stone-50 text-stone-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-100 transition-all">
+                    Preview
                   </button>
-                  <button onClick={() => handleAccessClick(subject)} className="flex-1 flex items-center justify-center gap-2 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-950 transition-all shadow-lg shadow-emerald-100 active:scale-95">
-                    {activeTab === 'pyqs' ? <Download size={18}/> : <ChevronRight size={18}/>} 
+                  <button onClick={() => handleAccessClick(subject)} className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-stone-950 transition-all shadow-lg shadow-emerald-100">
                     {activeTab === 'pyqs' ? 'Fetch' : 'Open'}
                   </button>
                 </div>
@@ -226,38 +202,24 @@ const SemesterPage = () => {
         </div>
       </main>
 
-      {/* --- UNITS MODAL (Professional Drawer Style) --- */}
+      {/* --- UNITS MODAL (Renamed Title) --- */}
       <AnimatePresence>
         {isUnitModalOpen && (
           <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-stone-900/60 backdrop-blur-md">
-            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="bg-white w-full max-w-xl rounded-t-[3rem] sm:rounded-[3rem] p-8 md:p-10 shadow-2xl relative max-h-[85vh] overflow-hidden flex flex-col">
-              <div className="w-12 h-1.5 bg-stone-200 rounded-full mx-auto mb-6 sm:hidden" />
-              <button onClick={() => setIsUnitModalOpen(false)} className="absolute top-8 right-8 p-2 text-stone-400 hover:text-stone-900 hover:rotate-90 transition-all"><X size={28} /></button>
-              
-              <div className="flex items-center gap-2 text-emerald-600 mb-2">
-                <Sparkles size={16}/>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Detailed Syllabus</span>
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: 'spring', damping: 25 }} className="bg-white w-full max-w-xl rounded-t-[3rem] sm:rounded-[3rem] p-8 md:p-10 shadow-2xl relative max-h-[85vh] overflow-hidden flex flex-col">
+              <button onClick={() => setIsUnitModalOpen(false)} className="absolute top-8 right-8 p-2 text-stone-400 hover:text-stone-900 transition-all"><X size={28} /></button>
+              {/* UPDATED: Modal title now reflects Units */}
+              <div className="mb-8">
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-2 block">Course Content</span>
+                <h2 className="text-3xl font-black text-stone-950 tracking-tighter">{selectedSubject?.name}</h2>
               </div>
-              <h2 className="text-3xl font-black mb-8 text-stone-950 leading-none tracking-tighter">{selectedSubject?.name}</h2>
-              
-              <div className="flex-1 overflow-y-auto space-y-4 pb-10 pr-2">
-                {loadingUnits ? (
-                  <div className="flex flex-col items-center py-20 text-stone-400">
-                    <Loader2 className="animate-spin mb-4" size={32} />
-                    <p className="text-[10px] font-black tracking-widest uppercase">Synthesizing metadata...</p>
-                  </div>
-                ) : 
+              <div className="flex-1 overflow-y-auto space-y-4 pb-10 custom-scrollbar">
+                {loadingUnits ? <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" size={32} /></div> : 
                   units.map((unit, idx) => (
-                    <motion.div 
-                      initial={{ opacity: 0, x: -10 }} 
-                      animate={{ opacity: 1, x: 0 }} 
-                      transition={{ delay: idx * 0.08 }}
-                      key={idx} 
-                      className="p-6 bg-stone-50 border border-stone-200/50 rounded-3xl flex items-start gap-5 hover:bg-white hover:border-emerald-200 transition-all"
-                    >
-                      <span className="bg-white border border-stone-200 text-stone-950 w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm">{idx + 1}</span>
+                    <div key={idx} className="p-6 bg-stone-50 border border-stone-200/50 rounded-3xl flex gap-5 hover:bg-white transition-colors group">
+                      <span className="bg-white border border-stone-200 text-stone-950 w-10 h-10 rounded-xl flex items-center justify-center text-xs font-black shrink-0 group-hover:border-emerald-500 group-hover:text-emerald-600 transition-all">U{idx + 1}</span>
                       <p className="text-stone-700 text-sm font-bold leading-relaxed">{unit}</p>
-                    </motion.div>
+                    </div>
                   ))
                 }
               </div>
@@ -266,18 +228,16 @@ const SemesterPage = () => {
         )}
       </AnimatePresence>
 
-      {/* --- YEAR SELECTION MODAL --- */}
+      {/* --- YEAR MODAL --- */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-stone-900/60 backdrop-blur-sm">
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white w-full max-w-md rounded-t-[3rem] sm:rounded-[3rem] p-10 shadow-2xl relative">
               <button onClick={() => setIsYearModalOpen(false)} className="absolute top-8 right-8 text-stone-400 hover:text-stone-900 transition-colors"><X size={28} /></button>
-              <h2 className="text-3xl font-black mb-1 tracking-tighter leading-none">Select Year</h2>
-              <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mb-10">Available Academic Batch</p>
-              
+              <h2 className="text-3xl font-black mb-10 tracking-tighter">Select Year</h2>
               <div className="grid grid-cols-2 gap-4">
                 {['2021', '2022', '2023', '2024'].map((year) => (
-                  <button key={year} onClick={() => handleYearSelection(year)} className="group py-6 bg-stone-50 border border-stone-200 rounded-[2rem] font-black text-stone-900 hover:bg-emerald-600 hover:text-white hover:scale-[1.02] transition-all active:scale-95 shadow-sm">
+                  <button key={year} onClick={() => handleYearSelection(year)} className="py-6 bg-stone-50 border border-stone-200 rounded-[2rem] font-black text-stone-900 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
                     {year}
                   </button>
                 ))}
@@ -287,19 +247,37 @@ const SemesterPage = () => {
         )}
       </AnimatePresence>
 
-      {/* --- FULLSCREEN PREVIEW --- */}
+      {/* --- PERFORMANCE-OPTIMIZED FULLSCREEN PREVIEW --- */}
       <AnimatePresence>
         {previewUrl && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-stone-900 flex flex-col">
+          <motion.div 
+            key="preview-overlay"
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="fixed inset-0 z-[200] bg-stone-900 flex flex-col"
+          >
             <div className="p-4 md:p-6 flex justify-between items-center bg-stone-900 text-white border-b border-white/10">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-xs shadow-lg">PDF</div>
-                <span className="font-bold text-xs md:text-sm truncate max-w-[200px] md:max-w-md">{selectedSubject?.name}</span>
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center font-black text-xs">PDF</div>
+                <span className="font-bold text-xs truncate max-w-[200px]">{selectedSubject?.name}</span>
               </div>
-              <button onClick={() => setPreviewUrl(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
+              <button 
+                onClick={() => setPreviewUrl(null)} 
+                className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X size={32} />
+              </button>
             </div>
             <div className="flex-1 w-full bg-stone-800">
-              <iframe src={previewUrl} className="w-full h-full border-none" title="PDF Preview" />
+              {previewUrl && (
+                <iframe 
+                  src={previewUrl} 
+                  className="w-full h-full border-none" 
+                  title="PDF Preview"
+                  loading="lazy"
+                />
+              )}
             </div>
           </motion.div>
         )}
