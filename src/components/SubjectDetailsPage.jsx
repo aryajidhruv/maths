@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, StickyNote 
+  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, StickyNote, Sparkles, ChevronRight 
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -20,28 +20,20 @@ const SubjectDetailsPage = () => {
   const [isYearModalOpen, setIsYearModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // 1. Fetch Units and Dynamic PYQ Years from Backend
   useEffect(() => {
     const fetchData = async () => {
       setLoadingUnits(true);
       setLoadingYears(true);
       try {
-        // Fetch Units
         const unitRes = await axios.get(`${API_BASE_URL}/metadata`, {
           params: { of: 'units', core_id: subjectId }
         });
         setUnits(Array.isArray(unitRes.data) ? unitRes.data : Object.values(unitRes.data));
 
-        // FETCH YEARS DYNAMICALLY
         const pyqRes = await axios.get(`${API_BASE_URL}/metadata`, {
           params: { of: 'pyqs', core_id: subjectId }
         });
-        
-        // This takes ["2023.pdf", "2025.pdf"] and turns it into ["2025", "2023"]
-        const years = pyqRes.data
-          
-          .sort((a, b) => b - a); // Sort descending (latest year first)
-          
+        const years = pyqRes.data.sort((a, b) => b - a);
         setPyqYears(years);
       } catch (err) { 
         console.error("Backend sync failed", err);
@@ -60,10 +52,7 @@ const SubjectDetailsPage = () => {
       const url = `https://maths-arity.fastapicloud.dev/maths/resources/${subjectId}/${resourceType}`;
       
       const response = await axios.get(url, {
-        params: {
-          unit: unitNo || undefined, 
-          yr: year || undefined
-        }
+        params: { unit: unitNo || undefined, yr: year || undefined }
       });
 
       if (response.data?.resource_url) {
@@ -72,7 +61,7 @@ const SubjectDetailsPage = () => {
         alert("Resource link not found in backend.");
       }
     } catch (err) {
-      alert("video not available.");
+      alert("Resource not available.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
@@ -80,92 +69,191 @@ const SubjectDetailsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] font-sans pb-20 selection:bg-emerald-100">
-      {/* Navbar */}
-      <nav className="bg-white/80 backdrop-blur-xl border-b border-stone-200/60 px-6 py-4 sticky top-0 z-[100] flex justify-between items-center shadow-sm">
-        <button onClick={() => navigate(-1)} className="p-2 bg-stone-100 rounded-xl hover:bg-emerald-50 transition-colors">
-          <ArrowLeft size={18} />
-        </button>
-        <h1 className="text-lg font-[1000] tracking-tighter uppercase text-stone-900">{subjectName}</h1>
-        <div className="bg-stone-950 text-white w-10 h-10 flex items-center justify-center rounded-xl font-black">∆</div>
-      </nav>
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
+      {/* Dynamic Glow Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-blue-900/10 rounded-full blur-[100px]" />
+      </div>
 
-      {/* Global Action Loader */}
-      {actionLoading && (
-        <div className="fixed inset-0 z-[200] bg-stone-900/20 backdrop-blur-[2px] flex items-center justify-center">
-          <div className="bg-white p-6 rounded-3xl shadow-2xl flex items-center gap-4 border border-stone-100">
-            <Loader2 className="animate-spin text-emerald-600" />
-            <span className="font-black text-xs uppercase tracking-widest text-stone-600">Syncing...</span>
+      {/* Navbar */}
+      <nav className="sticky top-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/5 px-6 py-5">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-emerald-500/10 hover:border-emerald-500/50 transition-all text-stone-400 hover:text-emerald-400"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-black tracking-[0.3em] uppercase text-emerald-500 mb-0.5">Academic Vault</span>
+            <h1 className="text-sm font-black tracking-tighter uppercase">{subjectName}</h1>
+          </div>
+
+          <div className="bg-emerald-500 text-black w-10 h-10 flex items-center justify-center rounded-xl font-black shadow-lg shadow-emerald-500/20">
+            ∆
           </div>
         </div>
-      )}
+      </nav>
 
-      <main className="max-w-4xl mx-auto px-4 py-12">
-        {/* Top Buttons */}
-        <div className="grid grid-cols-2 gap-4 mb-16">
-            <button onClick={() => setIsYearModalOpen(true)} className="flex items-center justify-center gap-4 p-8 bg-white border border-stone-200 rounded-[2.5rem] hover:border-emerald-500 transition-all group shadow-sm">
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-all"><FileText size={20}/></div>
-                <span className="font-black text-[11px] uppercase tracking-widest">PYQ Papers</span>
-            </button>
-            <button onClick={() => handleResourceAccess('syllabus')} className="flex items-center justify-center gap-4 p-8 bg-white border border-stone-200 rounded-[2.5rem] hover:border-emerald-500 transition-all group shadow-sm">
-                <div className="p-3 bg-stone-100 text-stone-600 rounded-xl group-hover:bg-stone-900 group-hover:text-white transition-all"><BookOpen size={20}/></div>
-                <span className="font-black text-[11px] uppercase tracking-widest">Syllabus</span>
-            </button>
+      {/* Global Loading Overlay */}
+      <AnimatePresence>
+        {actionLoading && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <Loader2 className="animate-spin text-emerald-500" size={48} />
+                <div className="absolute inset-0 blur-xl bg-emerald-500/20 animate-pulse" />
+              </div>
+              <span className="font-black text-xs uppercase tracking-[0.4em] text-emerald-500">Decrypting...</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className="max-w-5xl mx-auto px-6 pt-16">
+        {/* Hero Section */}
+        <header className="mb-20 text-center md:text-left">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 mb-6"
+          >
+            <Sparkles size={14} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Version 2.0 Synced</span>
+          </motion.div>
+          
+          <h2 className="text-5xl md:text-8xl font-[1000] tracking-tighter leading-[0.85] mb-8 uppercase">
+            Master the <br /> 
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 italic">Curriculum.</span>
+          </h2>
+        </header>
+
+        {/* Bento Grid Top Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
+          <button 
+            onClick={() => setIsYearModalOpen(true)} 
+            className="group relative overflow-hidden p-8 rounded-[2.5rem] bg-gradient-to-br from-stone-900 to-black border border-white/10 hover:border-emerald-500/50 transition-all text-left"
+          >
+            <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit group-hover:scale-110 transition-transform">
+              <FileText size={32} />
+            </div>
+            <h3 className="text-3xl font-black tracking-tighter uppercase">Previous Papers</h3>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Historical Exam Archive</p>
+            <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-emerald-500 transition-all" />
+          </button>
+
+          <button 
+            onClick={() => handleResourceAccess('syllabus')} 
+            className="group relative overflow-hidden p-8 rounded-[2.5rem] bg-stone-900 border border-white/10 hover:border-white/30 transition-all text-left"
+          >
+            <div className="mb-12 p-4 bg-white/5 text-white rounded-2xl w-fit group-hover:rotate-12 transition-transform">
+              <BookOpen size={32} />
+            </div>
+            <h3 className="text-3xl font-black tracking-tighter uppercase">Syllabus</h3>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Course Roadmap & Objectives</p>
+            <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-white transition-all" />
+          </button>
         </div>
 
-        {/* Units List */}
-        <div className="space-y-6">
-          <h3 className="text-2xl font-[1000] tracking-tighter text-stone-900 uppercase mb-8">Unit Vault</h3>
+        {/* Unit Vault */}
+        <section className="space-y-10">
+          <div className="flex items-end justify-between border-b border-white/10 pb-8">
+            <h3 className="text-4xl font-[1000] tracking-tighter uppercase italic">Unit Vault</h3>
+            <span className="text-emerald-500/20 font-black text-6xl leading-none">{units.length}</span>
+          </div>
+
           {loadingUnits ? (
-            <div className="flex justify-center py-24"><Loader2 className="animate-spin text-emerald-500" size={32}/></div>
+            <div className="flex flex-col items-center py-20 gap-4">
+              <Loader2 className="animate-spin text-emerald-500/50" size={40} />
+              <p className="text-[10px] font-black tracking-[0.5em] text-stone-500 uppercase">Indexing Modules</p>
+            </div>
           ) : (
-            units.map((unit, i) => (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={i} className="bg-white border border-stone-200 rounded-[2.5rem] p-6 md:p-8 hover:border-emerald-200 transition-all group shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-center gap-8 text-left">
-                  <div className="flex-1 flex gap-6">
-                    <div className="w-14 h-14 shrink-0 rounded-2xl bg-stone-50 border border-stone-100 text-stone-950 flex items-center justify-center font-black text-lg group-hover:bg-emerald-600 group-hover:text-white transition-all">{i + 1}</div>
-                    <p className="font-black text-stone-800 text-lg leading-tight flex-1 flex items-center">{unit}</p>
+            <div className="grid gap-4">
+              {units.map((unit, i) => (
+                <motion.div 
+                  initial={{ opacity: 0, x: -20 }} 
+                  whileInView={{ opacity: 1, x: 0 }} 
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.05 }}
+                  key={i} 
+                  className="group bg-white/5 border border-white/5 rounded-[2rem] p-6 hover:bg-white/[0.08] hover:border-emerald-500/30 transition-all"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center gap-8">
+                    <div className="flex-1 flex items-center gap-6">
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-black border border-white/10 flex items-center justify-center font-black text-xl text-stone-500 group-hover:text-emerald-400 group-hover:border-emerald-500/50 transition-all">
+                        {i + 1}
+                      </div>
+                      <p className="font-black text-lg tracking-tight leading-tight flex-1">{unit}</p>
+                    </div>
+                    
+                    <div className="flex gap-2 w-full md:w-auto">
+                      <button 
+                        onClick={() => handleResourceAccess('notes', i + 1)} 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/10"
+                      >
+                        <StickyNote size={16} /> Notes
+                      </button>
+                      <button 
+                        onClick={() => handleResourceAccess('videos', i + 1)} 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest border border-white/10 transition-all"
+                      >
+                        <PlayCircle size={16} /> Video
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-3 w-full md:w-auto">
-                    <button onClick={() => handleResourceAccess('notes', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-3 px-7 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-stone-900 transition-all">
-                      <StickyNote size={16}/> Notes
-                    </button>
-                    <button onClick={() => handleResourceAccess('videos', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-3 px-7 py-4 bg-stone-100 text-stone-700 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-emerald-50 transition-all">
-                      <PlayCircle size={16}/> Video
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              ))}
+            </div>
           )}
-        </div>
+        </section>
       </main>
 
-      {/* DYNAMIC YEAR MODAL (Synced with Backend) */}
+      {/* Year Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center bg-stone-950/40 backdrop-blur-md p-4">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white w-full max-w-sm rounded-[3rem] p-10 relative shadow-2xl">
-              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-8 right-8 text-stone-300 hover:text-stone-900 transition-colors"><X size={24}/></button>
-              <h2 className="text-2xl font-[1000] tracking-tighter text-stone-900 mb-8 text-center uppercase tracking-widest">Select Year</h2>
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsYearModalOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-xl" 
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-[3rem] p-10 relative shadow-2xl"
+            >
+              <button 
+                onClick={() => setIsYearModalOpen(false)} 
+                className="absolute top-8 right-8 text-stone-500 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-center mb-10">
+                <h2 className="text-3xl font-[1000] tracking-tighter uppercase mb-2">Select Year</h2>
+                <div className="h-1 w-12 bg-emerald-500 mx-auto rounded-full" />
+              </div>
               
               {loadingYears ? (
-                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-emerald-500"/></div>
+                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-emerald-500" /></div>
               ) : pyqYears.length > 0 ? (
                 <div className="grid grid-cols-2 gap-3">
                   {pyqYears.map(year => (
                     <button 
                       key={year} 
                       onClick={() => handleResourceAccess('pyqs', null, year)} 
-                      className="py-5 bg-stone-50 border border-stone-100 rounded-2xl font-black text-stone-900 hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                      className="py-6 bg-white/5 border border-white/10 rounded-2xl font-black hover:bg-emerald-500 hover:text-black transition-all group overflow-hidden relative"
                     >
-                      {year}
+                      <span className="relative z-10">{year}</span>
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10">
-                    <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">No papers found</p>
+                <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-[2rem]">
+                  <p className="text-stone-600 font-bold text-xs uppercase tracking-[0.2em]">No archives found</p>
                 </div>
               )}
             </motion.div>
