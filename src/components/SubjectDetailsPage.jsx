@@ -72,7 +72,7 @@ const SubjectDetailsPage = () => {
         alert("Resource link not found in backend.");
       }
     } catch (err) {
-      alert("Error accessing the vault.");
+      alert("video not available.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
