@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion'; // Added AnimatePresence
 import axios from 'axios';
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
-  Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor
+  Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
 
@@ -88,22 +88,77 @@ const LandingPage = () => {
       </div>
 
       {/* --- NAVBAR --- */}
-      <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-black/40 backdrop-blur-xl px-6 py-4 flex justify-between items-center">
+      <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-black/40 backdrop-blur-xl px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
           <div className="w-9 h-9 bg-emerald-600 text-white flex items-center justify-center rounded-lg font-black text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-all">∆</div>
           <span className="text-xl font-black tracking-tighter uppercase">MathVault</span>
         </div>
 
+        {/* Desktop Menu Items */}
         <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
           <a href="#resources" className="hover:text-emerald-400 transition">Vaults</a>
           <a href="#about" className="hover:text-emerald-400 transition">The Team</a>
           <button className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold">CONTACT US</button>
         </div>
 
-        <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X /> : <Menu />}
+        {/* Hamburger Icon */}
+        <button 
+          className="md:hidden text-white z-[110] p-2 bg-white/5 rounded-lg border border-white/10 active:scale-90 transition-transform" 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <X size={24}/> : <Menu size={24}/>}
         </button>
       </nav>
+
+      {/* --- MOBILE SIDEBAR --- */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            {/* Dark Backdrop Blur */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90] md:hidden"
+            />
+
+            {/* Sidebar Slide-out */}
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-screen w-[80%] max-w-[320px] bg-[#0A0A0A] border-l border-white/10 z-[105] p-10 flex flex-col md:hidden"
+            >
+              <div className="mt-20 space-y-12">
+                <div className="space-y-4">
+                  <p className="text-emerald-500 font-black text-[10px] tracking-[0.4em] uppercase opacity-50">Navigation</p>
+                  <nav className="flex flex-col gap-8">
+                    <a href="#resources" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Vaults</a>
+                    <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">The Team</a>
+                    <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
+                  </nav>
+                </div>
+
+                <div className="pt-10 border-t border-white/5">
+                  <p className="text-stone-500 font-black text-[9px] tracking-[0.2em] uppercase mb-6">College Access</p>
+                  <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                    <h5 className="font-black text-sm uppercase tracking-tight">Rajdhani College Node</h5>
+                    <p className="text-[10px] text-stone-500 mt-1 uppercase">University of Delhi</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-auto pb-6">
+                <button className="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
+                  <Mail size={14}/> Contact Team
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* --- HERO SECTION --- */}
       <header className="relative pt-48 pb-20 px-6 max-w-7xl mx-auto text-center z-10">
@@ -117,13 +172,15 @@ const LandingPage = () => {
           <p className="text-lg text-stone-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-wide text-[10px]">
             The high-performance repository for B.Sc Math Honors. <br />Every PYQ, Note, Syllabus, and Lecture in one clean space.
           </p>
-          <div className="flex justify-center gap-6">
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
             <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40px_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
             <a href="#about" className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black rounded-xl hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase backdrop-blur-sm">Meet the Creators</a>
           </div>
         </motion.div>
       </header>
 
+      {/* ... Rest of your sections (Bento, Semesters, About, Footer) remain the same ... */}
+      
       {/* --- CORE OFFERINGS BENTO --- */}
       <section className="max-w-6xl mx-auto px-6 py-10 z-10 relative">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -182,12 +239,6 @@ const LandingPage = () => {
 
       {/* --- HUGE ABOUT US / THE TEAM SECTION --- */}
       <section id="about" className="py-52 px-6 relative z-10 bg-[#080808]">
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-0 w-96 h-96 bg-emerald-500/10 blur-[150px] rounded-full"></div>
-            <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-500/10 blur-[150px] rounded-full"></div>
-        </div>
-
         <div className="max-w-7xl mx-auto relative">
             <div className="mb-32">
                 <div className="inline-flex items-center gap-2 text-emerald-500 font-black text-[11px] tracking-[0.6em] uppercase mb-8">
@@ -251,7 +302,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* --- FOOTER --- */}
       <footer className="py-20 px-6 border-t border-white/5 bg-[#010101] z-10 relative text-center md:text-left">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 items-center gap-10">
           <div className="flex items-center gap-3 justify-center md:justify-start">

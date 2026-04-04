@@ -70,139 +70,83 @@ const SubjectDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
-      {/* Dynamic Glow Background */}
+      {/* Background Glows */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-blue-900/10 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/5 px-6 py-5">
+      <nav className="sticky top-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="p-2.5 bg-white/5 border border-white/10 rounded-xl hover:bg-emerald-500/10 hover:border-emerald-500/50 transition-all text-stone-400 hover:text-emerald-400"
-          >
+          <button onClick={() => navigate(-1)} className="p-2.5 bg-white/5 border border-white/20 rounded-xl hover:border-emerald-500/50 transition-all">
             <ArrowLeft size={20} />
           </button>
-          
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] font-black tracking-[0.3em] uppercase text-emerald-500 mb-0.5">Academic Vault</span>
-            <h1 className="text-sm font-black tracking-tighter uppercase">{subjectName}</h1>
-          </div>
-
-          <div className="bg-emerald-500 text-black w-10 h-10 flex items-center justify-center rounded-xl font-black shadow-lg shadow-emerald-500/20">
-            ∆
-          </div>
+          <h1 className="text-sm font-black tracking-tighter uppercase">{subjectName}</h1>
+          <div className="bg-emerald-500 text-black w-10 h-10 flex items-center justify-center rounded-xl font-black">∆</div>
         </div>
       </nav>
 
-      {/* Global Loading Overlay */}
+      {/* Action Loader */}
       <AnimatePresence>
         {actionLoading && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <Loader2 className="animate-spin text-emerald-500" size={48} />
-                <div className="absolute inset-0 blur-xl bg-emerald-500/20 animate-pulse" />
-              </div>
-              <span className="font-black text-xs uppercase tracking-[0.4em] text-emerald-500">Decrypting...</span>
+              <Loader2 className="animate-spin text-emerald-500" size={48} />
+              <span className="font-black text-xs uppercase tracking-[0.4em] text-emerald-500">Processing</span>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <main className="max-w-5xl mx-auto px-6 pt-16">
-        {/* Hero Section */}
-        <header className="mb-20 text-center md:text-left">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 mb-6"
-          >
-            <Sparkles size={14} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Version 2.0 Synced</span>
+        <header className="mb-16">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-6 font-black text-[10px] uppercase tracking-widest">
+            <Sparkles size={14} /> Subject Resources
           </motion.div>
-          
-          <h2 className="text-5xl md:text-8xl font-[1000] tracking-tighter leading-[0.85] mb-8 uppercase">
-            Master the <br /> 
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 italic">Curriculum.</span>
+          <h2 className="text-5xl md:text-8xl font-[1000] tracking-tighter uppercase leading-[0.85]">
+            Curated <br /><span className="italic text-emerald-500">Materials.</span>
           </h2>
         </header>
 
-        {/* Bento Grid Top Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
-          <button 
-            onClick={() => setIsYearModalOpen(true)} 
-            className="group relative overflow-hidden p-8 rounded-[2.5rem] bg-gradient-to-br from-stone-900 to-black border border-white/10 hover:border-emerald-500/50 transition-all text-left"
-          >
-            <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit group-hover:scale-110 transition-transform">
-              <FileText size={32} />
-            </div>
-            <h3 className="text-3xl font-black tracking-tighter uppercase">Previous Papers</h3>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Historical Exam Archive</p>
+        {/* Top Bento Cards with Highlighted Borders */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
+          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/20 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl">
+            <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
+            <h3 className="text-3xl font-black tracking-tighter uppercase">Question Papers</h3>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Dynamic PYQ Archive</p>
             <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-emerald-500 transition-all" />
           </button>
 
-          <button 
-            onClick={() => handleResourceAccess('syllabus')} 
-            className="group relative overflow-hidden p-8 rounded-[2.5rem] bg-stone-900 border border-white/10 hover:border-white/30 transition-all text-left"
-          >
-            <div className="mb-12 p-4 bg-white/5 text-white rounded-2xl w-fit group-hover:rotate-12 transition-transform">
-              <BookOpen size={32} />
-            </div>
+          <button onClick={() => handleResourceAccess('syllabus')} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/20 hover:border-white/50 transition-all text-left shadow-2xl">
+            <div className="mb-12 p-4 bg-white/5 text-white rounded-2xl w-fit border border-white/10 group-hover:border-white/30 transition-all"><BookOpen size={32} /></div>
             <h3 className="text-3xl font-black tracking-tighter uppercase">Syllabus</h3>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Course Roadmap & Objectives</p>
+            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Full Course Roadmap</p>
             <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-white transition-all" />
           </button>
         </div>
 
-        {/* Unit Vault */}
-        <section className="space-y-10">
-          <div className="flex items-end justify-between border-b border-white/10 pb-8">
-            <h3 className="text-4xl font-[1000] tracking-tighter uppercase italic">Unit Vault</h3>
-            <span className="text-emerald-500/20 font-black text-6xl leading-none">{units.length}</span>
-          </div>
-
+        {/* Units with High Contrast Borders */}
+        <section className="space-y-6">
+          <h3 className="text-2xl font-black tracking-tighter uppercase mb-8 opacity-50">Unit Curriculum</h3>
           {loadingUnits ? (
-            <div className="flex flex-col items-center py-20 gap-4">
-              <Loader2 className="animate-spin text-emerald-500/50" size={40} />
-              <p className="text-[10px] font-black tracking-[0.5em] text-stone-500 uppercase">Indexing Modules</p>
-            </div>
+            <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" /></div>
           ) : (
-            <div className="grid gap-4">
+            <div className="space-y-4">
               {units.map((unit, i) => (
                 <motion.div 
-                  initial={{ opacity: 0, x: -20 }} 
-                  whileInView={{ opacity: 1, x: 0 }} 
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.05 }}
                   key={i} 
-                  className="group bg-white/5 border border-white/5 rounded-[2rem] p-6 hover:bg-white/[0.08] hover:border-emerald-500/30 transition-all"
+                  initial={{ opacity: 0, y: 20 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  viewport={{ once: true }}
+                  className="group bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/40 rounded-[2rem] p-6 transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.05)]"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center gap-8">
+                  <div className="flex flex-col md:flex-row md:items-center gap-6">
                     <div className="flex-1 flex items-center gap-6">
-                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-black border border-white/10 flex items-center justify-center font-black text-xl text-stone-500 group-hover:text-emerald-400 group-hover:border-emerald-500/50 transition-all">
-                        {i + 1}
-                      </div>
-                      <p className="font-black text-lg tracking-tight leading-tight flex-1">{unit}</p>
+                      <div className="w-12 h-12 shrink-0 rounded-xl bg-black border border-white/20 flex items-center justify-center font-black text-emerald-500 group-hover:border-emerald-500 transition-all">{i + 1}</div>
+                      <p className="font-black text-lg tracking-tight leading-tight">{unit}</p>
                     </div>
-                    
-                    <div className="flex gap-2 w-full md:w-auto">
-                      <button 
-                        onClick={() => handleResourceAccess('notes', i + 1)} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg shadow-emerald-600/10"
-                      >
-                        <StickyNote size={16} /> Notes
-                      </button>
-                      <button 
-                        onClick={() => handleResourceAccess('videos', i + 1)} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest border border-white/10 transition-all"
-                      >
-                        <PlayCircle size={16} /> Video
-                      </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleResourceAccess('notes', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"><StickyNote size={14} /> Notes</button>
+                      <button onClick={() => handleResourceAccess('videos', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"><PlayCircle size={14} /> Video</button>
                     </div>
                   </div>
                 </motion.div>
@@ -212,48 +156,18 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* Year Modal */}
+      {/* Modal with defined border */}
       <AnimatePresence>
         {isYearModalOpen && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
-            <motion.div 
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setIsYearModalOpen(false)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-xl" 
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-[3rem] p-10 relative shadow-2xl"
-            >
-              <button 
-                onClick={() => setIsYearModalOpen(false)} 
-                className="absolute top-8 right-8 text-stone-500 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-              
-              <div className="text-center mb-10">
-                <h2 className="text-3xl font-[1000] tracking-tighter uppercase mb-2">Select Year</h2>
-                <div className="h-1 w-12 bg-emerald-500 mx-auto rounded-full" />
-              </div>
-              
-              {loadingYears ? (
-                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-emerald-500" /></div>
-              ) : pyqYears.length > 0 ? (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/20 w-full max-w-md rounded-[3rem] p-10 relative shadow-[0_0_50px_rgba(0,0,0,1)]">
+              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-8 right-8 text-stone-500 hover:text-white"><X size={24} /></button>
+              <h2 className="text-2xl font-black uppercase text-center mb-8 tracking-widest">Select Year</h2>
+              {loadingYears ? <Loader2 className="animate-spin mx-auto text-emerald-500" /> : (
                 <div className="grid grid-cols-2 gap-3">
                   {pyqYears.map(year => (
-                    <button 
-                      key={year} 
-                      onClick={() => handleResourceAccess('pyqs', null, year)} 
-                      className="py-6 bg-white/5 border border-white/10 rounded-2xl font-black hover:bg-emerald-500 hover:text-black transition-all group overflow-hidden relative"
-                    >
-                      <span className="relative z-10">{year}</span>
-                    </button>
+                    <button key={year} onClick={() => handleResourceAccess('pyqs', null, year)} className="py-6 bg-white/5 border border-white/10 rounded-2xl font-black hover:bg-emerald-600 hover:text-black transition-all">{year}</button>
                   ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 border-2 border-dashed border-white/5 rounded-[2rem]">
-                  <p className="text-stone-600 font-bold text-xs uppercase tracking-[0.2em]">No archives found</p>
                 </div>
               )}
             </motion.div>
