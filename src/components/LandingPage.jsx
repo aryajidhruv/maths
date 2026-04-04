@@ -144,7 +144,7 @@ const LandingPage = () => {
                 <div className="pt-10 border-t border-white/5">
                   <p className="text-stone-500 font-black text-[9px] tracking-[0.2em] uppercase mb-6">College Access</p>
                   <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                    <h5 className="font-black text-sm uppercase tracking-tight">Rajdhani College Node</h5>
+                    <h5 className="font-black text-sm uppercase tracking-tight">Rajdhani College </h5>
                     <p className="text-[10px] text-stone-500 mt-1 uppercase">University of Delhi</p>
                   </div>
                 </div>
