@@ -5,7 +5,7 @@ import axios from 'axios';
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
   Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
-  MessageCircle // Added for WhatsApp icon
+  MessageCircle, Users // Added Users icon for Creators link
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
 
@@ -191,7 +191,6 @@ const LandingPage = () => {
             transition={{ duration: 1.2 }}
             className="relative"
           >
-            {/* 1. ANIMATED BACKGROUND LAYER (FIXED TO VIEWPORT) */}
             {showRain && <SymbolRain />}
             
             <div className="fixed inset-0 z-0 pointer-events-none">
@@ -217,15 +216,9 @@ const LandingPage = () => {
 
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
                 <a href="#resources" className="hover:text-emerald-400 transition">Vaults</a>
-                <a href="#about" className="hover:text-emerald-400 transition">The Team</a>
-                {/* Community Link in Nav */}
-                <a 
-                  href={COMMUNITY_LINK} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="flex items-center gap-2 text-emerald-500 hover:text-emerald-400 transition-colors"
-                >
-                  <MessageCircle size={14} /> COMMUNITY
+                {/* Replaced Community with Creator in Header */}
+                <a href="#about" className="flex items-center gap-2 hover:text-emerald-400 transition">
+                  <Users size={14} /> CREATORS
                 </a>
                 <button className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold">CONTACT US</button>
               </div>
@@ -261,14 +254,9 @@ const LandingPage = () => {
                         <p className="text-emerald-500 font-black text-[10px] tracking-[0.4em] uppercase opacity-50">Navigation</p>
                         <nav className="flex flex-col gap-8">
                           <a href="#resources" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Vaults</a>
-                          <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">The Team</a>
-                          <a 
-                            href={COMMUNITY_LINK} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-4xl font-black tracking-tighter uppercase text-emerald-500 flex items-center gap-2"
-                          >
-                            Join <MessageCircle size={28} />
+                          {/* Replaced Join with Creators in Mobile Sidebar */}
+                          <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors flex items-center gap-2">
+                            Creators <Users size={28} />
                           </a>
                           <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
                         </nav>
@@ -299,8 +287,8 @@ const LandingPage = () => {
                     The high-performance repository for B.Sc Math Honors. <br />Every PYQ, Note, Syllabus, and Lecture in one clean space.
                   </motion.p>
                   <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
-                    <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40px_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
-                    {/* Hero Community Button */}
+                    <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
+                    {/* Hero Community Button - Kept for UX, but Header link was removed as requested */}
                     <a 
                       href={COMMUNITY_LINK} 
                       target="_blank" 
