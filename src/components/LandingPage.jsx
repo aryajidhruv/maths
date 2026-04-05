@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
-  Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail
+  Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
+  MessageCircle // Added for WhatsApp icon
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
 
@@ -121,7 +122,7 @@ const FloatingMathParticles = () => {
             y: [0, -100, 0],
             x: [0, 50, 0],
             rotate: [0, 180, 360],
-            opacity: [0.08, 0.25, 0.08], // Slightly higher opacity for visibility
+            opacity: [0.08, 0.25, 0.08], 
             scale: [1, 1.1, 1]
           }}
           transition={{ duration: p.duration, repeat: Infinity, ease: "linear", delay: p.delay }}
@@ -145,6 +146,7 @@ const LandingPage = () => {
   });
   const [loading, setLoading] = useState(availableSemesters.length === 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const COMMUNITY_LINK = "https://chat.whatsapp.com/HbuIF5IrOQWKdCjOwRPkLJ";
 
   useEffect(() => {
     const fetchSemesters = async () => {
@@ -194,7 +196,6 @@ const LandingPage = () => {
             
             <div className="fixed inset-0 z-0 pointer-events-none">
               <FloatingMathParticles />
-              {/* Glow effects positioned behind symbols */}
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full animate-pulse z-[-1]"></div>
               <div 
                 className="absolute inset-0 opacity-[0.03] z-[-1]" 
@@ -217,6 +218,15 @@ const LandingPage = () => {
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
                 <a href="#resources" className="hover:text-emerald-400 transition">Vaults</a>
                 <a href="#about" className="hover:text-emerald-400 transition">The Team</a>
+                {/* Community Link in Nav */}
+                <a 
+                  href={COMMUNITY_LINK} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center gap-2 text-emerald-500 hover:text-emerald-400 transition-colors"
+                >
+                  <MessageCircle size={14} /> COMMUNITY
+                </a>
                 <button className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold">CONTACT US</button>
               </div>
 
@@ -252,15 +262,16 @@ const LandingPage = () => {
                         <nav className="flex flex-col gap-8">
                           <a href="#resources" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Vaults</a>
                           <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">The Team</a>
+                          <a 
+                            href={COMMUNITY_LINK} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-4xl font-black tracking-tighter uppercase text-emerald-500 flex items-center gap-2"
+                          >
+                            Join <MessageCircle size={28} />
+                          </a>
                           <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
                         </nav>
-                      </div>
-                      <div className="pt-10 border-t border-white/5">
-                        <p className="text-stone-500 font-black text-[9px] tracking-[0.2em] uppercase mb-6">College Access</p>
-                        <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                          <h5 className="font-black text-sm uppercase tracking-tight">Rajdhani College </h5>
-                          <p className="text-[10px] text-stone-500 mt-1 uppercase">University of Delhi</p>
-                        </div>
                       </div>
                     </div>
                     <div className="mt-auto pb-6">
@@ -289,7 +300,15 @@ const LandingPage = () => {
                   </motion.p>
                   <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
                     <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40px_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
-                    <a href="#about" className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black rounded-xl hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase backdrop-blur-sm">Meet the Creators</a>
+                    {/* Hero Community Button */}
+                    <a 
+                      href={COMMUNITY_LINK} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black rounded-xl hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase backdrop-blur-sm flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle size={14} /> Join Community
+                    </a>
                   </motion.div>
                 </motion.div>
               </header>
@@ -410,7 +429,14 @@ const LandingPage = () => {
                                 <h3 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-6 leading-none">JOIN THE <br/>COLLECTIVE.</h3>
                                 <p className="font-bold text-emerald-950 uppercase text-sm tracking-widest max-w-md">Contribute notes, papers, or technical suggestions to help the Rajdhani community grow.</p>
                             </div>
-                            <button className="bg-black text-white px-16 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:scale-110 transition-all active:scale-95 shadow-2xl shrink-0">Contact the Team</button>
+                            <a 
+                              href={COMMUNITY_LINK} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="bg-black text-white px-16 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:scale-110 transition-all active:scale-95 shadow-2xl shrink-0 text-center"
+                            >
+                              Join the Community
+                            </a>
                         </div>
                         <Heart className="absolute -bottom-20 -right-20 text-emerald-600/20 w-96 h-96 rotate-12" />
                     </motion.div>
@@ -426,7 +452,14 @@ const LandingPage = () => {
                   <div className="text-[9px] font-black text-stone-700 uppercase tracking-[0.5em]">Built for Rajdhani College by Students</div>
                   <div className="flex justify-center md:justify-end gap-8 text-[9px] font-black text-stone-600 uppercase tracking-widest">
                      <a href="#" className="hover:text-emerald-400 transition-all">Github</a>
-                     <a href="#" className="hover:text-emerald-400 transition-all">Community</a>
+                     <a 
+                        href={COMMUNITY_LINK} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="hover:text-emerald-400 transition-all"
+                      >
+                        Community
+                      </a>
                   </div>
                 </div>
               </footer>
