@@ -45,7 +45,7 @@ const SubjectDetailsPage = () => {
     fetchData();
   }, [subjectId]);
 
-  // Updated function to handle preview vs download
+  // --- CORE LOGIC: FORCED BLOB DOWNLOAD ---
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
     setActionLoading(true);
     try {
@@ -58,25 +58,45 @@ const SubjectDetailsPage = () => {
 
       const resourceUrl = response.data?.resource_url;
 
-      if (resourceUrl) {
-        if (mode === 'download') {
-          // Attempt to force download
+      if (!resourceUrl) {
+        alert("Resource link not found in database.");
+        return;
+      }
+
+      if (mode === 'download') {
+        try {
+          // Fetch the file as a blob using axios
+          const fileRes = await axios.get(resourceUrl, { responseType: 'blob' });
+          
+          // Create a local blob object URL
+          const blob = new Blob([fileRes.data], { type: 'application/pdf' });
+          const blobUrl = window.URL.createObjectURL(blob);
+          
+          // Create a hidden anchor tag to trigger the "Save As" dialog
           const link = document.createElement('a');
-          link.href = resourceUrl;
-          link.setAttribute('download', ''); // Works if CORS allows
-          link.target = '_blank';
+          link.href = blobUrl;
+          
+          // Construct a professional filename
+          const identifier = unitNo ? `Unit_${unitNo}` : `Session_${year}`;
+          const fileName = `${subjectName}_${identifier}_${type}.pdf`.replace(/\s+/g, '_');
+          
+          link.setAttribute('download', fileName);
           document.body.appendChild(link);
           link.click();
-          link.remove();
-        } else {
-          // Standard Preview
+          
+          // Cleanup memory
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(blobUrl);
+        } catch (downloadErr) {
+          console.error("Blob download failed, falling back to window.open", downloadErr);
           window.open(resourceUrl, '_blank');
         }
       } else {
-        alert("Resource link not found in backend.");
+        // Standard Preview: Open in a new tab
+        window.open(resourceUrl, '_blank');
       }
     } catch (err) {
-      alert("Resource not available.");
+      alert("This resource is currently unavailable.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
@@ -85,28 +105,29 @@ const SubjectDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
-      {/* Background Glows */}
+      {/* Dynamic Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px]" />
       </div>
 
+      {/* Navigation */}
       <nav className="sticky top-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <button onClick={() => navigate(-1)} className="p-2.5 bg-white/5 border border-white/20 rounded-xl hover:border-emerald-500/50 transition-all">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-sm font-black tracking-tighter uppercase">{subjectName}</h1>
+          <h1 className="text-xs font-black tracking-widest uppercase opacity-70">{subjectName}</h1>
           <div className="bg-emerald-500 text-black w-10 h-10 flex items-center justify-center rounded-xl font-black">∆</div>
         </div>
       </nav>
 
-      {/* Action Loader */}
+      {/* Global Action Loader */}
       <AnimatePresence>
         {actionLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="animate-spin text-emerald-500" size={48} />
-              <span className="font-black text-xs uppercase tracking-[0.4em] text-emerald-500">Processing</span>
+              <span className="font-black text-[10px] uppercase tracking-[0.5em] text-emerald-500">Decrypting Files</span>
             </div>
           </motion.div>
         )}
@@ -117,31 +138,31 @@ const SubjectDetailsPage = () => {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mb-6 font-black text-[10px] uppercase tracking-widest">
             <Sparkles size={14} /> Subject Resources
           </motion.div>
-          <h2 className="text-5xl md:text-8xl font-[1000] tracking-tighter uppercase leading-[0.85]">
-            Curated <br /><span className="italic text-emerald-500">Materials.</span>
+          <h2 className="text-6xl md:text-8xl font-[1000] tracking-tighter uppercase leading-[0.85]">
+            Access <br /><span className="italic text-emerald-500 text-outline">Vault.</span>
           </h2>
         </header>
 
-        {/* Top Bento Cards */}
+        {/* Bento Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/20 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl">
+          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl overflow-hidden">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
-            <h3 className="text-3xl font-black tracking-tighter uppercase">Question Papers</h3>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Dynamic PYQ Archive</p>
+            <h3 className="text-3xl font-black tracking-tighter uppercase">Exam Papers</h3>
+            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mt-2">Historical PYQ Library</p>
             <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-emerald-500 transition-all" />
           </button>
 
-          <button onClick={() => handleResourceAccess('syllabus')} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/20 hover:border-white/50 transition-all text-left shadow-2xl">
+          <button onClick={() => handleResourceAccess('syllabus')} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-white/40 transition-all text-left shadow-2xl">
             <div className="mb-12 p-4 bg-white/5 text-white rounded-2xl w-fit border border-white/10 group-hover:border-white/30 transition-all"><BookOpen size={32} /></div>
             <h3 className="text-3xl font-black tracking-tighter uppercase">Syllabus</h3>
-            <p className="text-stone-500 text-xs font-bold uppercase tracking-widest mt-2">Full Course Roadmap</p>
+            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mt-2">Course Objectives</p>
             <ChevronRight className="absolute bottom-10 right-10 text-stone-700 group-hover:text-white transition-all" />
           </button>
         </div>
 
-        {/* Units Curriculum */}
+        {/* Unit Curriculum List */}
         <section className="space-y-6">
-          <h3 className="text-2xl font-black tracking-tighter uppercase mb-8 opacity-50">Unit Curriculum</h3>
+          <h3 className="text-xl font-black tracking-tighter uppercase mb-8 opacity-40">Unit Curriculum</h3>
           {loadingUnits ? (
             <div className="flex justify-center py-20"><Loader2 className="animate-spin text-emerald-500" /></div>
           ) : (
@@ -152,35 +173,34 @@ const SubjectDetailsPage = () => {
                   initial={{ opacity: 0, y: 20 }} 
                   whileInView={{ opacity: 1, y: 0 }} 
                   viewport={{ once: true }}
-                  className="group bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/40 rounded-[2rem] p-6 transition-all hover:shadow-[0_0_30px_rgba(16,185,129,0.05)]"
+                  className="group bg-[#0A0A0A] border border-white/5 hover:border-emerald-500/30 rounded-[2.5rem] p-8 transition-all"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center gap-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-8">
                     <div className="flex-1 flex items-center gap-6">
-                      <div className="w-12 h-12 shrink-0 rounded-xl bg-black border border-white/20 flex items-center justify-center font-black text-emerald-500 group-hover:border-emerald-500 transition-all">{i + 1}</div>
-                      <p className="font-black text-lg tracking-tight leading-tight">{unit}</p>
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-black border border-white/10 flex items-center justify-center font-black text-xl text-emerald-500 group-hover:border-emerald-500 transition-all">{i + 1}</div>
+                      <p className="font-black text-xl tracking-tight leading-tight max-w-md">{unit}</p>
                     </div>
                     
-                    {/* Notes Buttons: Preview & Download */}
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3 lg:ml-auto">
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'preview')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
                       >
-                        <Eye size={14} /> Preview
+                        <Eye size={16} /> Preview
                       </button>
                       
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-600/10"
                       >
-                        <Download size={14} /> Download
+                        <Download size={16} /> Download
                       </button>
 
                       <button 
                         onClick={() => handleResourceAccess('videos', i + 1)} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-stone-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
                       >
-                        <PlayCircle size={14} /> Video
+                        <PlayCircle size={16} /> Video
                       </button>
                     </div>
                   </div>
@@ -191,17 +211,24 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* Year Selection Modal */}
+      {/* Improved Modal: Force Download for PYQs */}
       <AnimatePresence>
         {isYearModalOpen && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/20 w-full max-w-md rounded-[3rem] p-10 relative shadow-[0_0_50px_rgba(0,0,0,1)]">
-              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-8 right-8 text-stone-500 hover:text-white"><X size={24} /></button>
-              <h2 className="text-2xl font-black uppercase text-center mb-8 tracking-widest">Select Year</h2>
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-[3.5rem] p-12 relative shadow-[0_0_100px_rgba(0,0,0,1)]">
+              <button onClick={() => setIsYearModalOpen(false)} className="absolute top-10 right-10 text-stone-500 hover:text-white transition-colors"><X size={28} /></button>
+              <h2 className="text-2xl font-black uppercase text-center mb-10 tracking-widest">Select Session</h2>
               {loadingYears ? <Loader2 className="animate-spin mx-auto text-emerald-500" /> : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {pyqYears.map(year => (
-                    <button key={year} onClick={() => handleResourceAccess('pyqs', null, year)} className="py-6 bg-white/5 border border-white/10 rounded-2xl font-black hover:bg-emerald-600 hover:text-black transition-all">{year}</button>
+                    <button 
+                      key={year} 
+                      onClick={() => handleResourceAccess('pyqs', null, year, 'download')} 
+                      className="py-6 bg-white/5 border border-white/10 rounded-2xl font-black text-lg hover:bg-emerald-600 hover:text-black transition-all flex flex-col items-center gap-2"
+                    >
+                      {year}
+                      <Download size={16} className="opacity-40" />
+                    </button>
                   ))}
                 </div>
               )}
