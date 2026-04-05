@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, StickyNote, Sparkles, ChevronRight 
+  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, Sparkles, ChevronRight, Download, Eye 
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -45,18 +45,33 @@ const SubjectDetailsPage = () => {
     fetchData();
   }, [subjectId]);
 
-  const handleResourceAccess = async (type, unitNo = null, year = null) => {
+  // Updated function to handle preview vs download
+  const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
     setActionLoading(true);
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
-      const url = `https://maths-arity.fastapicloud.dev/maths/resources/${subjectId}/${resourceType}`;
+      const url = `${API_BASE_URL}/resources/${subjectId}/${resourceType}`;
       
       const response = await axios.get(url, {
         params: { unit: unitNo || undefined, yr: year || undefined }
       });
 
-      if (response.data?.resource_url) {
-        window.open(response.data.resource_url, '_blank');
+      const resourceUrl = response.data?.resource_url;
+
+      if (resourceUrl) {
+        if (mode === 'download') {
+          // Attempt to force download
+          const link = document.createElement('a');
+          link.href = resourceUrl;
+          link.setAttribute('download', ''); // Works if CORS allows
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        } else {
+          // Standard Preview
+          window.open(resourceUrl, '_blank');
+        }
       } else {
         alert("Resource link not found in backend.");
       }
@@ -107,7 +122,7 @@ const SubjectDetailsPage = () => {
           </h2>
         </header>
 
-        {/* Top Bento Cards with Highlighted Borders */}
+        {/* Top Bento Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
           <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/20 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
@@ -124,7 +139,7 @@ const SubjectDetailsPage = () => {
           </button>
         </div>
 
-        {/* Units with High Contrast Borders */}
+        {/* Units Curriculum */}
         <section className="space-y-6">
           <h3 className="text-2xl font-black tracking-tighter uppercase mb-8 opacity-50">Unit Curriculum</h3>
           {loadingUnits ? (
@@ -144,9 +159,29 @@ const SubjectDetailsPage = () => {
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-black border border-white/20 flex items-center justify-center font-black text-emerald-500 group-hover:border-emerald-500 transition-all">{i + 1}</div>
                       <p className="font-black text-lg tracking-tight leading-tight">{unit}</p>
                     </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleResourceAccess('notes', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/20"><StickyNote size={14} /> Notes</button>
-                      <button onClick={() => handleResourceAccess('videos', i + 1)} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"><PlayCircle size={14} /> Video</button>
+                    
+                    {/* Notes Buttons: Preview & Download */}
+                    <div className="flex flex-wrap gap-2">
+                      <button 
+                        onClick={() => handleResourceAccess('notes', i + 1, null, 'preview')} 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                      >
+                        <Eye size={14} /> Preview
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
+                      >
+                        <Download size={14} /> Download
+                      </button>
+
+                      <button 
+                        onClick={() => handleResourceAccess('videos', i + 1)} 
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 text-stone-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
+                      >
+                        <PlayCircle size={14} /> Video
+                      </button>
                     </div>
                   </div>
                 </motion.div>
@@ -156,7 +191,7 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* Modal with defined border */}
+      {/* Year Selection Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
