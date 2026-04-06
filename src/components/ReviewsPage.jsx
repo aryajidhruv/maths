@@ -3,34 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { 
-  ArrowLeft, MessageSquare, Star, Send, 
-  User, School, Loader2, CheckCircle2, AlertCircle 
+  ArrowLeft, Star, Send, Loader2, MessageSquare
 } from 'lucide-react';
-
-const API_REVIEW_GET = 'https://maths-arity.fastapicloud.dev/review/get';
-const API_REVIEW_POST = 'https://maths-arity.fastapicloud.dev/review/post';
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
 
 const ReviewsPage = () => {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [hoverRate, setHoverRate] = useState(0);
   const [status, setStatus] = useState({ type: '', msg: '' });
-  const [formData, setFormData] = useState({ name: '', college: '', review: '' });
+  
+  // Updated Form Data to match your API
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    institute: '', 
+    comment: '', 
+    rate: 5 
+  });
 
   useEffect(() => { fetchReviews(); }, []);
 
   const fetchReviews = async () => {
     try {
-      const response = await axios.get(API_REVIEW_GET);
-      const dataArray = Object.values(response.data).reverse(); 
-      setReviews(dataArray);
-    } catch (err) { console.error("Fetch error", err); } 
+      const response = await axios.get('https://maths-arity.fastapicloud.dev/review/get');
+      setReviews(Object.values(response.data).reverse());
+    } catch (err) { console.error(err); } 
     finally { setLoading(false); }
   };
 
@@ -39,123 +37,112 @@ const ReviewsPage = () => {
     setSubmitting(true);
     setStatus({ type: '', msg: '' });
     try {
-      await axios.post(API_REVIEW_POST, null, {
-        params: { name: formData.name, college: formData.college, review: formData.review }
+      // POST mapping to your exact query parameters
+      await axios.post('https://maths-arity.fastapicloud.dev/review/post', null, {
+        params: { 
+          NameDescriptioninstitute: formData.institute,
+          comment: formData.comment,
+          rate: formData.rate,
+          name: formData.name
+        }
       });
-      setStatus({ type: 'success', msg: 'Review encrypted and added to the vault!' });
-      setFormData({ name: '', college: '', review: '' });
+      setStatus({ type: 'success', msg: 'Sync Successful.' });
+      setFormData({ name: '', institute: '', comment: '', rate: 5 });
       fetchReviews();
     } catch (err) {
-      setStatus({ type: 'error', msg: 'Transmission failed.' });
+      setStatus({ type: 'error', msg: 'Transmission Failed.' });
     } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-emerald-500/30 pb-20 overflow-x-hidden">
-      {/* Background Orbs */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/5 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full"></div>
-      </div>
-
-      <nav className="relative z-10 p-6 flex items-center justify-between max-w-7xl mx-auto">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-stone-500 hover:text-emerald-500 transition-colors">
-          <ArrowLeft size={16} /> Back to Terminal
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-emerald-500/30 pb-20">
+      <nav className="p-6 max-w-7xl mx-auto flex items-center justify-between">
+        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-500 transition-colors">
+          <ArrowLeft size={16} /> Return
         </button>
-        <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center font-black">∆</div>
-            <span className="font-black tracking-tighter uppercase text-sm">Review_Node</span>
-        </div>
+        <div className="font-black uppercase tracking-tighter text-sm">Review_Hub</div>
       </nav>
 
-      <main className="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-12 mt-12">
+      <main className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-10">
+        {/* Left: Submission Form */}
         <div className="lg:col-span-5">
-          <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
-            <h1 className="text-5xl font-black tracking-tighter uppercase mb-4 leading-tight">
-              Submit <br /> <span className="text-emerald-500 italic">Feedback</span>
-            </h1>
-            <p className="text-stone-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12">System Contribution</p>
-
+            <h1 className="text-6xl font-black tracking-tighter uppercase mb-10">Vault <br/><span className="text-emerald-500 italic">Feedback</span></h1>
+            
             <form onSubmit={handleSubmit} className="space-y-6">
-              {[
-                { label: 'Identified Name', icon: <User size={16}/>, key: 'name', type: 'text', placeholder: 'Name' },
-                { label: 'Institution', icon: <School size={16}/>, key: 'college', type: 'text', placeholder: 'College Name' }
-              ].map((field) => (
-                <div key={field.key} className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-stone-600 ml-2">{field.label}</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-600">{field.icon}</span>
-                    <input 
-                      required type={field.type} placeholder={field.placeholder}
-                      value={formData[field.key]} onChange={(e) => setFormData({...formData, [field.key]: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 pl-12 pr-4 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none transition-all font-medium"
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-stone-600 tracking-widest ml-2">Name</label>
+                    <input required placeholder="Dhrub Arya" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 focus:border-emerald-500/50 outline-none transition-all" />
                 </div>
-              ))}
-
-              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-stone-600 ml-2">Review Content</label>
-                <textarea 
-                  required rows="5" placeholder="Feedback"
-                  value={formData.review} onChange={(e) => setFormData({...formData, review: e.target.value})}
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-6 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none transition-all font-medium resize-none"
-                />
+                <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-stone-600 tracking-widest ml-2">Institute</label>
+                    <input required placeholder="Rajdhani College" value={formData.institute} onChange={(e) => setFormData({...formData, institute: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 focus:border-emerald-500/50 outline-none transition-all" />
+                </div>
               </div>
 
-              <button disabled={submitting} className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50">
-                {submitting ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> SUBMIT</>}
+              <div className="space-y-4">
+                  <label className="text-[9px] font-black uppercase text-stone-600 tracking-widest ml-2">Rating</label>
+                  <div className="flex gap-3 bg-white/[0.02] border border-white/5 w-fit p-4 rounded-2xl">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setHoverRate(star)}
+                        onMouseLeave={() => setHoverRate(0)}
+                        onClick={() => setFormData({...formData, rate: star})}
+                        className="transition-transform active:scale-90"
+                      >
+                        <Star 
+                          size={24} 
+                          fill={(hoverRate || formData.rate) >= star ? "#10b981" : "none"} 
+                          className={(hoverRate || formData.rate) >= star ? "text-emerald-500" : "text-stone-800"} 
+                        />
+                      </button>
+                    ))}
+                  </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[9px] font-black uppercase text-stone-600 tracking-widest ml-2">Comment</label>
+                <textarea required rows="4" placeholder="Your experience..." value={formData.comment} onChange={(e) => setFormData({...formData, comment: e.target.value})}
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-6 focus:border-emerald-500/50 outline-none transition-all resize-none" />
+              </div>
+
+              {status.msg && <div className={`p-4 rounded-xl text-[10px] font-black uppercase tracking-widest ${status.type === 'success' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>{status.msg}</div>}
+
+              <button disabled={submitting} className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 flex justify-center gap-3 uppercase tracking-widest text-[11px]">
+                {submitting ? <Loader2 className="animate-spin" /> : 'Send Transmission'}
               </button>
             </form>
-          </motion.div>
         </div>
 
-        {/* --- THE FEED SECTION (Tailwind Scrollbar Fix) --- */}
+        {/* Right: Reviews List */}
         <div className="lg:col-span-7">
-          <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-8 lg:p-12 min-h-[600px] backdrop-blur-xl">
-            <div className="flex justify-between items-center mb-12 border-b border-white/5 pb-6">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><MessageSquare size={20}/></div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Reviews</h2>
-                </div>
-                <div className="px-4 py-2 bg-white/5 rounded-full text-[9px] font-black text-stone-500 uppercase tracking-[0.2em]">
-                    {reviews.length} RECORDS FOUND
-                </div>
-            </div>
-
-            {/* Tailwind Arbitrary Values for Scrollbar */}
-            <div className="space-y-6 max-h-[700px] overflow-y-auto pr-4 
-                scrollbar-thin 
-                scrollbar-thumb-white/5 
-                scrollbar-track-transparent 
-                [&::-webkit-scrollbar]:w-[4px] 
-                [&::-webkit-scrollbar-thumb]:bg-white/10 
-                [&::-webkit-scrollbar-thumb]:rounded-full">
-              
-              {loading ? (
-                  <div className="flex flex-col items-center justify-center py-20 opacity-20"><Loader2 className="animate-spin mb-4" size={40} /></div>
-              ) : (
-                  reviews.map((rev, idx) => (
-                    <motion.div key={idx} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
-                      className="p-8 bg-white/[0.01] border border-white/5 rounded-[2rem] hover:bg-white/[0.03] transition-all group"
-                    >
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-emerald-500 group-hover:bg-emerald-500 group-hover:text-black transition-all">
-                            {rev[0]?.[0] || 'U'}
-                          </div>
-                          <div>
-                            <h4 className="font-black text-sm uppercase tracking-tight">{rev[0]}</h4>
-                            <p className="text-[9px] font-bold text-stone-600 uppercase tracking-widest">{rev[1]}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-1 text-emerald-500/20"><Star size={10} fill="currentColor" /></div>
+          <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 backdrop-blur-sm max-h-[800px] overflow-y-auto [&::-webkit-scrollbar]:w-[2px] [&::-webkit-scrollbar-thumb]:bg-emerald-500">
+            <h2 className="text-2xl font-black uppercase mb-10">Records_</h2>
+            {loading ? <Loader2 className="animate-spin text-emerald-500 mx-auto" /> : (
+              <div className="space-y-6">
+                {reviews.map((rev, idx) => (
+                  <div key={idx} className="p-8 bg-white/[0.01] border border-white/5 rounded-[2rem] hover:bg-white/[0.03] transition-all">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center font-black text-xs">{rev[0]?.[0]}</div>
+                      <div className="flex-grow">
+                          <h4 className="font-black text-[10px] uppercase tracking-wider">{rev[0]}</h4>
+                          <p className="text-[8px] text-stone-600 uppercase font-black">{rev[1]}</p>
                       </div>
-                      <p className="text-stone-400 text-sm leading-relaxed italic">"{rev[2]}"</p>
-                    </motion.div>
-                  ))
-              )}
-            </div>
+                      <div className="flex gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={8} fill={i < (rev[3] || 5) ? "#10b981" : "none"} className={i < (rev[3] || 5) ? "text-emerald-500" : "text-stone-800"} />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-stone-400 text-sm italic font-medium">"{rev[2]}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
