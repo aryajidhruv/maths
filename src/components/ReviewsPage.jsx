@@ -19,13 +19,10 @@ const ReviewsPage = () => {
     rate: 5 
   });
 
-  // Endpoints updated to match your verified example
   const GET_URL = 'https://maths-arity.fastapicloud.dev/review/get';
   const INSERT_URL = 'https://maths-arity.fastapicloud.dev/review/insert';
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
+  useEffect(() => { fetchReviews(); }, []);
 
   const fetchReviews = async () => {
     try {
@@ -39,32 +36,49 @@ const ReviewsPage = () => {
     }
   };
 
+  // UPDATED VALIDATION TO MATCH API (1000 chars)
+  const validateForm = () => {
+    if (formData.name.trim().length < 2) return "Name is too short.";
+    if (formData.institute.trim().length < 2) return "Institute name is too short.";
+    if (formData.comment.trim().length < 5) return "Comment must be at least 5 characters.";
+    if (formData.name.length > 50 || formData.institute.length > 50) return "Name/Institute exceeds 50 chars.";
+    
+    // Matched to API limit
+    if (formData.comment.length > 1000) return "Comment exceeds 1000 characters."; 
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const error = validateForm();
+    if (error) {
+      setStatus({ type: 'error', msg: error });
+      return;
+    }
+
     setSubmitting(true);
     setStatus({ type: '', msg: '' });
 
     try {
-      // Using the exact parameters from your example: institute, comment, rate, name
       const response = await axios.post(INSERT_URL, null, {
         params: { 
-          institute: formData.institute,
-          comment: formData.comment,
+          institute: formData.institute.trim(),
+          comment: formData.comment.trim(),
           rate: parseInt(formData.rate),
-          name: formData.name
+          name: formData.name.trim()
         }
       });
 
       if (response.status === 200 || response.status === 201) {
-        setStatus({ type: 'success', msg: 'Transmission Synchronized.' });
+        setStatus({ type: 'success', msg: 'Review Synchronized.' });
         setFormData({ name: '', institute: '', comment: '', rate: 5 });
         setTimeout(fetchReviews, 800);
       }
     } catch (err) {
-      console.error("Submission Error:", err.response?.data || err.message);
+      const apiError = err.response?.data?.detail;
       setStatus({ 
         type: 'error', 
-        msg: err.response?.data?.detail || 'Transmission Failed.' 
+        msg: typeof apiError === 'string' ? apiError : 'Transmission Failed.' 
       });
     } finally {
       setSubmitting(false);
@@ -86,44 +100,50 @@ const ReviewsPage = () => {
         >
           <ArrowLeft size={16} /> Return
         </button>
-        <div className="font-black uppercase tracking-tighter text-sm opacity-40"></div>
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-12">
         
-        {/* SUBMISSION PANEL */}
         <div className="lg:col-span-5">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <h1 className="text-6xl font-black tracking-tighter uppercase mb-10 leading-[0.9]">
-              The <br/><span className="text-emerald-500 italic">Feedback</span><br/>
+              The <br/><span className="text-emerald-500 italic">Feedback</span>
             </h1>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-stone-600 tracking-[0.3em] ml-2"></label>
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black uppercase text-emerald-500/70 tracking-widest">Name</label>
+                    <span className="text-[8px] text-stone-700">{formData.name.length}/50</span>
+                  </div>
                   <input 
                     required 
-                    placeholder="Name" 
+                    maxLength={50}
+                    placeholder="User Name" 
                     value={formData.name} 
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 focus:border-emerald-500/50 outline-none transition-all placeholder:opacity-20" 
+                    className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-emerald-500/50 outline-none transition-all placeholder:text-stone-600" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase text-stone-600 tracking-[0.3em] ml-2"></label>
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black uppercase text-emerald-500/70 tracking-widest">Institute</label>
+                    <span className="text-[8px] text-stone-700">{formData.institute.length}/50</span>
+                  </div>
                   <input 
                     required 
-                    placeholder="Institute" 
+                    maxLength={50}
+                    placeholder="College/Org" 
                     value={formData.institute} 
                     onChange={(e) => setFormData({...formData, institute: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 focus:border-emerald-500/50 outline-none transition-all placeholder:opacity-20" 
+                    className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-emerald-500/50 outline-none transition-all placeholder:text-stone-600" 
                   />
                 </div>
               </div>
 
               <div className="space-y-4">
-                
+                <label className="text-[10px] font-black uppercase text-emerald-500/70 tracking-widest ml-2">Rating</label>
                 <div className="flex gap-3 bg-white/[0.02] border border-white/5 w-fit p-4 rounded-2xl">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button 
@@ -145,14 +165,19 @@ const ReviewsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase text-stone-600 tracking-[0.3em] ml-2">Your Experience</label>
+                <div className="flex justify-between items-center px-2">
+                  <label className="text-[10px] font-black uppercase text-emerald-500/70 tracking-widest">Your Experience</label>
+                  {/* UPDATED COUNTER TO 1000 */}
+                  <span className="text-[8px] text-stone-700">{formData.comment.length}/1000</span>
+                </div>
                 <textarea 
                   required 
+                  maxLength={1000} // UPDATED TO 1000
                   rows="4" 
                   placeholder="Share your experience..." 
                   value={formData.comment} 
                   onChange={(e) => setFormData({...formData, comment: e.target.value})}
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-6 focus:border-emerald-500/50 outline-none transition-all resize-none placeholder:opacity-20" 
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-2xl p-6 text-white focus:border-emerald-500/50 outline-none transition-all resize-none placeholder:text-stone-600" 
                 />
               </div>
 
@@ -181,15 +206,14 @@ const ReviewsPage = () => {
           </motion.div>
         </div>
 
-        {/* LOGS DISPLAY */}
         <div className="lg:col-span-7">
+          {/* Logs display code remains the same */}
           <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 backdrop-blur-md max-h-[800px] overflow-y-auto custom-scrollbar">
             <h2 className="text-2xl font-black uppercase tracking-tighter mb-10 border-b border-white/5 pb-6">Reviews</h2>
             
             {loading ? (
               <div className="py-20 flex flex-col items-center opacity-30">
                 <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
-                
               </div>
             ) : (
               <div className="space-y-6">
