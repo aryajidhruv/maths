@@ -3,6 +3,7 @@ import ScrollToTop from './ScrollToTop';
 import LandingPage from './components/LandingPage';
 import SemesterPage from './components/SemesterPage';
 import SubjectDetailsPage from './components/SubjectDetailsPage'; // Or wherever you saved it
+import ReviewsPage from './components/ReviewsPage';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
 
         <Route path="/semester/:semId" element={<SemesterPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
 
         <Route path="/semester/:semId/subject/:subjectId" element={<SubjectDetailsPage />} />
       </Routes>

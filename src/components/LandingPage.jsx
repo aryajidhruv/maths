@@ -5,7 +5,7 @@ import axios from 'axios';
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
   Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
-  MessageCircle, Users // Added Users icon for Creators link
+  MessageCircle, Users, MessageSquareQuote // Added MessageSquareQuote for reviews
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
 
@@ -146,6 +146,11 @@ const LandingPage = () => {
   });
   const [loading, setLoading] = useState(availableSemesters.length === 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // --- NEW REVIEW STATE ---
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
   const COMMUNITY_LINK = "https://chat.whatsapp.com/HbuIF5IrOQWKdCjOwRPkLJ";
 
   useEffect(() => {
@@ -175,7 +180,23 @@ const LandingPage = () => {
         }, remaining);
       }
     };
+
+    // --- FETCH REVIEWS FROM YOUR API ---
+    const fetchReviews = async () => {
+      try {
+        const response = await axios.get('https://maths-arity.fastapicloud.dev/review/get?top=3');
+        // The API returns an object with numeric keys, so we convert it to an array
+        const reviewList = Object.values(response.data);
+        setReviews(reviewList);
+      } catch (err) {
+        console.error("Review fetch failed", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
     fetchSemesters();
+    fetchReviews();
   }, []);
 
   return (
@@ -216,10 +237,13 @@ const LandingPage = () => {
 
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
                 <a href="#resources" className="hover:text-emerald-400 transition">Vaults</a>
-                {/* Replaced Community with Creator in Header */}
                 <a href="#about" className="flex items-center gap-2 hover:text-emerald-400 transition">
                   <Users size={14} /> CREATORS
                 </a>
+                {/* NEW REVIEW BUTTON */}
+                <button onClick={() => navigate('/reviews')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">
+                  Reviews
+                </button>
                 <button className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold">CONTACT US</button>
               </div>
 
@@ -254,10 +278,10 @@ const LandingPage = () => {
                         <p className="text-emerald-500 font-black text-[10px] tracking-[0.4em] uppercase opacity-50">Navigation</p>
                         <nav className="flex flex-col gap-8">
                           <a href="#resources" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Vaults</a>
-                          {/* Replaced Join with Creators in Mobile Sidebar */}
                           <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors flex items-center gap-2">
                             Creators <Users size={28} />
                           </a>
+                          <button onClick={() => { setIsMenuOpen(false); navigate('/reviews'); }} className="text-left text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Reviews</button>
                           <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
                         </nav>
                       </div>
@@ -288,7 +312,6 @@ const LandingPage = () => {
                   </motion.p>
                   <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
                     <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
-                    {/* Hero Community Button - Kept for UX, but Header link was removed as requested */}
                     <a 
                       href={COMMUNITY_LINK} 
                       target="_blank" 
@@ -361,6 +384,47 @@ const LandingPage = () => {
                       ))
                     )}
                   </motion.div>
+                </div>
+              </section>
+
+              {/* --- NEW: REVIEWS BENTO SECTION --- */}
+              <section className="py-24 px-6 relative bg-white/[0.01]">
+                <div className="max-w-6xl mx-auto">
+                  <div className="flex justify-between items-end mb-12">
+                    <h2 className="text-4xl font-black tracking-tighter uppercase">Student <span className="text-emerald-500 italic">Reviews</span></h2>
+                    <button onClick={() => navigate('/reviews')} className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] flex items-center gap-2 hover:gap-3 transition-all">
+                      View All <ArrowUpRight size={14}/>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {reviewsLoading ? (
+                      <div className="col-span-full py-12 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>
+                    ) : (
+                      reviews.map((rev, idx) => (
+                        <motion.div 
+                          key={idx}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl relative overflow-hidden group hover:border-emerald-500/30 transition-all"
+                        >
+                          <MessageSquareQuote size={40} className="absolute -right-2 -bottom-2 text-white/[0.03] rotate-12 group-hover:text-emerald-500/10 transition-colors" />
+                          <div className="flex flex-col h-full">
+                            <div className="mb-6 flex items-center gap-3">
+                              <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center font-black text-emerald-500 uppercase text-xs">
+                                {rev[0]?.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-black text-[10px] uppercase tracking-wider">{rev[0]}</p>
+                                <p className="text-[8px] text-stone-500 uppercase font-bold">{rev[1]}</p>
+                              </div>
+                            </div>
+                            <p className="text-stone-300 text-sm italic leading-relaxed">"{rev[2]}"</p>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </section>
 
