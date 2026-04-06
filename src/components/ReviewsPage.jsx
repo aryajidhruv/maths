@@ -78,8 +78,8 @@ const ReviewsPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {[
-                { label: 'Identified Name', icon: <User size={16}/>, key: 'name', type: 'text', placeholder: 'Dhrub Arya' },
-                { label: 'Institution', icon: <School size={16}/>, key: 'college', type: 'text', placeholder: 'Rajdhani College' }
+                { label: 'Identified Name', icon: <User size={16}/>, key: 'name', type: 'text', placeholder: 'Name' },
+                { label: 'Institution', icon: <School size={16}/>, key: 'college', type: 'text', placeholder: 'College Name' }
               ].map((field) => (
                 <div key={field.key} className="space-y-2">
                   <label className="text-[9px] font-black uppercase tracking-widest text-stone-600 ml-2">{field.label}</label>
@@ -97,14 +97,14 @@ const ReviewsPage = () => {
               <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-stone-600 ml-2">Review Content</label>
                 <textarea 
-                  required rows="5" placeholder="Vault performance report..."
+                  required rows="5" placeholder="Feedback"
                   value={formData.review} onChange={(e) => setFormData({...formData, review: e.target.value})}
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-6 focus:border-emerald-500/50 focus:bg-white/[0.05] outline-none transition-all font-medium resize-none"
                 />
               </div>
 
               <button disabled={submitting} className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50">
-                {submitting ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> SYNC DATA</>}
+                {submitting ? <Loader2 className="animate-spin" size={20} /> : <><Send size={18} /> SUBMIT</>}
               </button>
             </form>
           </motion.div>
@@ -116,7 +116,7 @@ const ReviewsPage = () => {
             <div className="flex justify-between items-center mb-12 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-xl"><MessageSquare size={20}/></div>
-                    <h2 className="text-2xl font-black uppercase tracking-tighter">Live Feed</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tighter">Reviews</h2>
                 </div>
                 <div className="px-4 py-2 bg-white/5 rounded-full text-[9px] font-black text-stone-500 uppercase tracking-[0.2em]">
                     {reviews.length} RECORDS FOUND
