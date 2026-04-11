@@ -25,12 +25,12 @@ const SubjectDetailsPage = () => {
       setLoadingUnits(true);
       setLoadingYears(true);
       try {
-        const unitRes = await axios.get(`${API_BASE_URL}/metadata`, {
+        const unitRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'units', core_id: subjectId }
         });
         setUnits(Array.isArray(unitRes.data) ? unitRes.data : Object.values(unitRes.data));
 
-        const pyqRes = await axios.get(`${API_BASE_URL}/metadata`, {
+        const pyqRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'pyqs', core_id: subjectId }
         });
         const years = pyqRes.data.sort((a, b) => b - a);
@@ -45,58 +45,79 @@ const SubjectDetailsPage = () => {
     fetchData();
   }, [subjectId]);
 
-  // --- CORE LOGIC: FORCED BLOB DOWNLOAD ---
+  // --- NEW: AUTH INITIALIZATION HELPER ---
+  const getAuthToken = async (resourceType) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/init`, null, {
+        params: {
+          discipline: 'maths',
+          core_id: subjectId,
+          type: resourceType
+        }
+      });
+      // Ensure this matches your actual response structure (usually response.data.access_token)
+      return response.data.access_token || response.data;
+    } catch (err) {
+      console.error("Authentication handshake failed", err);
+      return null;
+    }
+  };
+
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
     setActionLoading(true);
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
-      const url = `${API_BASE_URL}/resources/${subjectId}/${resourceType}`;
       
-      const response = await axios.get(url, {
-        params: { unit: unitNo || undefined, yr: year || undefined }
-      });
-
-      const resourceUrl = response.data?.resource_url;
-
-      if (!resourceUrl) {
-        alert("Resource link not found in database.");
+      // 1. Fetch Bearer Token first (Schema Security Requirement)
+      const token = await getAuthToken(resourceType);
+      
+      if (!token) {
+        alert("Access Denied: Could not initialize secure session.");
         return;
       }
 
+      // 2. Request Resource with Authorization Header
+      const url = `${API_BASE_URL}/resource/maths/${subjectId}/${resourceType}`;
+      const response = await axios.get(url, {
+        params: { unit: unitNo || undefined, yr: year || undefined },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'accept': 'application/json' 
+        }
+      });
+
+      const resourceUrl = response.data?.resource_url || response.data;
+
+      if (!resourceUrl || typeof resourceUrl !== 'string') {
+        alert("Resource node is empty in the vault.");
+        return;
+      }
+
+      // 3. Handle Resource Delivery
       if (mode === 'download') {
         try {
-          // Fetch the file as a blob using axios
           const fileRes = await axios.get(resourceUrl, { responseType: 'blob' });
-          
-          // Create a local blob object URL
           const blob = new Blob([fileRes.data], { type: 'application/pdf' });
           const blobUrl = window.URL.createObjectURL(blob);
           
-          // Create a hidden anchor tag to trigger the "Save As" dialog
           const link = document.createElement('a');
           link.href = blobUrl;
-          
-          // Construct a professional filename
           const identifier = unitNo ? `Unit_${unitNo}` : `Session_${year}`;
           const fileName = `${subjectName}_${identifier}_${type}.pdf`.replace(/\s+/g, '_');
           
           link.setAttribute('download', fileName);
           document.body.appendChild(link);
           link.click();
-          
-          // Cleanup memory
           document.body.removeChild(link);
           window.URL.revokeObjectURL(blobUrl);
         } catch (downloadErr) {
-          console.error("Blob download failed, falling back to window.open", downloadErr);
           window.open(resourceUrl, '_blank');
         }
       } else {
-        // Standard Preview: Open in a new tab
         window.open(resourceUrl, '_blank');
       }
     } catch (err) {
-      alert("This resource is currently unavailable.");
+      alert("This resource is currently restricted or unreachable.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
@@ -121,13 +142,12 @@ const SubjectDetailsPage = () => {
         </div>
       </nav>
 
-      {/* Global Action Loader */}
       <AnimatePresence>
         {actionLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="animate-spin text-emerald-500" size={48} />
-              <span className="font-black text-[10px] uppercase tracking-[0.5em] text-emerald-500">Decrypting Files</span>
+              <span className="font-black text-[10px] uppercase tracking-[0.5em] text-emerald-500">Authorizing Access</span>
             </div>
           </motion.div>
         )}
@@ -139,11 +159,10 @@ const SubjectDetailsPage = () => {
             <Sparkles size={14} /> Subject Resources
           </motion.div>
           <h2 className="text-6xl md:text-8xl font-[1000] tracking-tighter uppercase leading-[0.85]">
-            Access <br /><span className="italic text-emerald-500 text-outline">Vault.</span>
+            Access <br /><span className="italic text-emerald-500">Vault.</span>
           </h2>
         </header>
 
-        {/* Bento Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
           <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl overflow-hidden">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
@@ -160,7 +179,6 @@ const SubjectDetailsPage = () => {
           </button>
         </div>
 
-        {/* Unit Curriculum List */}
         <section className="space-y-6">
           <h3 className="text-xl font-black tracking-tighter uppercase mb-8 opacity-40">Unit Curriculum</h3>
           {loadingUnits ? (
@@ -191,7 +209,7 @@ const SubjectDetailsPage = () => {
                       
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-xl shadow-emerald-600/10"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
                       >
                         <Download size={16} /> Download
                       </button>
@@ -211,7 +229,6 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* Improved Modal: Force Download for PYQs */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">

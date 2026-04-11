@@ -1,1 +1,1 @@
-export const API_BASE_URL = "https://maths-arity.fastapicloud.dev/maths"
+export const API_BASE_URL = "https://maths-arity.fastapicloud.dev/api/v1"

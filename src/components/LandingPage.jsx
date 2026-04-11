@@ -5,9 +5,11 @@ import axios from 'axios';
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
   Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
-  MessageCircle, Users, MessageSquareQuote, Star // Added Star for ratings
+  MessageCircle, Users, MessageSquareQuote, Star 
 } from 'lucide-react'; 
-import { API_BASE_URL } from '../config';
+
+// --- API CONFIGURATION ---
+const API_BASE_URL = "https://maths-arity.fastapicloud.dev/api/v1";
 
 // --- SHARED ANIMATION VARIANTS ---
 const fadeInUp = {
@@ -68,7 +70,7 @@ const VaultLoader = () => (
   </motion.div>
 );
 
-// --- 100+ SYMBOL RAIN TRANSITION ---
+// --- SYMBOL RAIN TRANSITION ---
 const SymbolRain = () => {
   const rainParticles = useMemo(() => {
     return Array.from({ length: 110 }).map((_, i) => ({
@@ -99,7 +101,7 @@ const SymbolRain = () => {
   );
 };
 
-// --- PERSISTENT AMBIENT BACKGROUND SYMBOLS (FIXED) ---
+// --- PERSISTENT AMBIENT BACKGROUND SYMBOLS ---
 const FloatingMathParticles = () => {
   const particles = useMemo(() => {
     return Array.from({ length: 40 }).map((_, i) => ({
@@ -146,8 +148,6 @@ const LandingPage = () => {
   });
   const [loading, setLoading] = useState(availableSemesters.length === 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // --- NEW REVIEW STATE ---
   const [reviews, setReviews] = useState([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
 
@@ -158,7 +158,7 @@ const LandingPage = () => {
       const startTime = Date.now();
       if (availableSemesters.length === 0) setLoading(true);
       try {
-        const response = await axios.get(`${API_BASE_URL}/metadata`, {
+        const response = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'cores' },
           headers: { 'accept': 'application/json' }
         });
@@ -167,6 +167,7 @@ const LandingPage = () => {
         setAvailableSemesters(sortedKeys);
         localStorage.setItem('vault_semesters', JSON.stringify(sortedKeys));
       } catch (err) {
+        console.error("Semester API Error:", err);
         if (availableSemesters.length === 0) setAvailableSemesters([1, 2, 3, 4, 5, 6]);
       } finally {
         setLoading(false);
@@ -181,11 +182,12 @@ const LandingPage = () => {
       }
     };
 
-    // --- FETCH REVIEWS FROM YOUR API ---
     const fetchReviews = async () => {
       try {
-        const response = await axios.get('https://maths-arity.fastapicloud.dev/review/get?top=3');
-        // The API returns an object with numeric keys, so we convert it to an array
+        // Updated to /get-top based on OpenAPI schema
+        const response = await axios.get(`${API_BASE_URL}/review/get-top`, {
+          params: { top: 3 }
+        });
         const reviewList = Object.values(response.data);
         setReviews(reviewList);
       } catch (err) {
@@ -240,7 +242,6 @@ const LandingPage = () => {
                 <a href="#about" className="flex items-center gap-2 hover:text-emerald-400 transition">
                   <Users size={14} /> CREATORS
                 </a>
-                {/* NEW REVIEW BUTTON */}
                 <button onClick={() => navigate('/reviews')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">
                   Reviews
                 </button>
@@ -282,21 +283,14 @@ const LandingPage = () => {
                             Creators <Users size={28} />
                           </a>
                           <button onClick={() => { setIsMenuOpen(false); navigate('/reviews'); }} className="text-left text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Reviews</button>
-                          <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
                         </nav>
                       </div>
-                    </div>
-                    <div className="mt-auto pb-6">
-                      <button className="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
-                        <Mail size={14}/> Contact Team
-                      </button>
                     </div>
                   </motion.div>
                 </>
               )}
             </AnimatePresence>
 
-            {/* --- CONTENT WRAPPER --- */}
             <div className="relative z-10">
               {/* --- HERO SECTION --- */}
               <header className="relative pt-48 pb-20 px-6 max-w-7xl mx-auto text-center">
@@ -310,43 +304,14 @@ const LandingPage = () => {
                   <motion.p variants={fadeInUp} className="text-lg text-stone-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-wide text-[10px]">
                     The high-performance repository for B.Sc Math Honors. <br />Every PYQ, Note, Syllabus, and Lecture in one clean space.
                   </motion.p>
-                  <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
+                  <div className="flex flex-col sm:flex-row justify-center gap-6">
                     <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
-                    <a 
-                      href={COMMUNITY_LINK} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black rounded-xl hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase backdrop-blur-sm flex items-center justify-center gap-2"
-                    >
+                    <a href={COMMUNITY_LINK} target="_blank" rel="noopener noreferrer" className="px-10 py-5 bg-white/5 border border-white/10 text-white font-black rounded-xl hover:bg-white/10 transition-all text-[10px] tracking-widest uppercase backdrop-blur-sm flex items-center justify-center gap-2">
                       <MessageCircle size={14} /> Join Community
                     </a>
-                  </motion.div>
+                  </div>
                 </motion.div>
               </header>
-
-              {/* --- CORE OFFERINGS BENTO --- */}
-              <motion.section 
-                initial="hidden" 
-                whileInView="visible" 
-                viewport={{ once: true, margin: "-100px" }} 
-                variants={staggerContainer} 
-                className="max-w-6xl mx-auto px-6 py-10"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[
-                      { icon: <FileText size={20}/>, title: "PYQ PAPERS", desc: "Organized Previous years.", color: "emerald" },
-                      { icon: <BookOpen size={20}/>, title: "HAND NOTES", desc: "DU Faculty Aligned.", color: "blue" },
-                      { icon: <Layout size={20}/>, title: "SYLLABUS", desc: "Direct Exam Mapping.", color: "purple" },
-                      { icon: <Video size={20}/>, title: "LECTURES", desc: "Visual Theorem Proofs.", color: "red" }
-                    ].map((item, idx) => (
-                      <motion.div key={idx} variants={fadeInUp} whileHover={{ y: -8 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all backdrop-blur-sm">
-                          <div className={`p-3 bg-${item.color}-500/10 text-${item.color}-500 w-fit rounded-xl mb-6 group-hover:scale-110 transition-transform`}>{item.icon}</div>
-                          <h4 className="text-xl font-black mb-1 tracking-tight">{item.title}</h4>
-                          <p className="text-stone-500 text-[9px] font-bold uppercase tracking-widest leading-relaxed">{item.desc}</p>
-                      </motion.div>
-                    ))}
-                </div>
-              </motion.section>
 
               {/* --- SEMESTER VAULT SECTION --- */}
               <section id="resources" className="py-32 px-6 relative">
@@ -387,7 +352,7 @@ const LandingPage = () => {
                 </div>
               </section>
 
-              {/* --- NEW: REVIEWS BENTO SECTION --- */}
+              {/* --- REVIEWS SECTION --- */}
               <section className="py-24 px-6 relative bg-white/[0.01]">
                 <div className="max-w-6xl mx-auto">
                   <div className="flex justify-between items-end mb-12">
@@ -418,15 +383,9 @@ const LandingPage = () => {
                                 <p className="font-black text-[10px] uppercase tracking-wider">{rev[0]}</p>
                                 <p className="text-[8px] text-stone-500 uppercase font-bold">{rev[1]}</p>
                               </div>
-                              {/* STAR RATING SECTION */}
                               <div className="flex gap-0.5">
                                 {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    size={10} 
-                                    fill={i < (rev[3] || 5) ? "#10b981" : "none"} 
-                                    className={i < (rev[3] || 5) ? "text-emerald-500" : "text-white/10"} 
-                                  />
+                                  <Star key={i} size={10} fill={i < (rev[3] || 5) ? "#10b981" : "none"} className={i < (rev[3] || 5) ? "text-emerald-500" : "text-white/10"} />
                                 ))}
                               </div>
                             </div>
@@ -439,7 +398,7 @@ const LandingPage = () => {
                 </div>
               </section>
 
-              {/* --- HUGE ABOUT US / THE TEAM SECTION --- */}
+              {/* --- TEAM SECTION --- */}
               <section id="about" className="py-52 px-6 relative bg-[#080808]/50">
                 <div className="max-w-7xl mx-auto relative">
                     <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-32">
@@ -450,79 +409,37 @@ const LandingPage = () => {
                             THE BRAINS <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-200">BEHIND THE VAULT.</span>
                         </h2>
-                        <div className="h-1 w-40 bg-emerald-500 mb-12"></div>
                         <p className="text-xl md:text-3xl text-stone-400 max-w-4xl leading-snug font-medium tracking-tight">
-                            We are final-year B.Sc Mathematics Honors students at Rajdhani College. 
-                            What started as a personal struggle to find quality resources evolved 
-                            into a high-performance ecosystem for the entire DU community.
+                            Final-year B.Sc Mathematics Honors students at Rajdhani College, building high-performance ecosystems for the DU community.
                         </p>
                     </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         {[
-                            { name: "Dhruv Arya", role: "Frontend Architecture", icon: <Monitor className="text-blue-500" size={40}/>, desc: "Mastermind behind the high-performance user interface and seamless navigation logic." },
-                            { name: "Aditya Balotra", role: "Backend Systems", icon: <Database className="text-emerald-500" size={40}/>, desc: "The engineer responsible for the secure, globally-distributed vault infrastructure and API core." }
+                            { name: "Dhruv Arya", role: "Frontend Architecture", icon: <Monitor className="text-blue-500" size={40}/>, desc: "Mastermind behind the user interface and seamless navigation logic." },
+                            { name: "Aditya Balotra", role: "Backend Systems", icon: <Database className="text-emerald-500" size={40}/>, desc: "Responsible for secure vault infrastructure and API core." }
                         ].map((member, i) => (
-                            <motion.div 
-                                key={i} 
-                                initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8 }}
-                                whileHover={{ y: -10 }}
-                                className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-20 transition-opacity">{member.icon}</div>
-                                <div className="w-20 h-20 bg-white/5 text-white flex items-center justify-center rounded-3xl mb-10 group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-all">{member.icon}</div>
+                            <motion.div key={i} whileHover={{ y: -10 }} className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden">
+                                <div className="w-20 h-20 bg-white/5 text-white flex items-center justify-center rounded-3xl mb-10 group-hover:bg-emerald-500/10 transition-all">{member.icon}</div>
                                 <h4 className="text-4xl font-black mb-3 tracking-tighter uppercase">{member.name}</h4>
                                 <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.4em] mb-8">{member.role}</p>
-                                <p className="text-lg text-stone-500 leading-relaxed font-medium max-w-sm">{member.desc}</p>
+                                <p className="text-lg text-stone-500 leading-relaxed font-medium">{member.desc}</p>
                             </motion.div>
                         ))}
                     </div>
-
-                    <motion.div 
-                      initial={{ scale: 0.95, opacity: 0 }} 
-                      whileInView={{ scale: 1, opacity: 1 }} 
-                      viewport={{ once: true }}
-                      className="mt-32 p-20 bg-emerald-500 rounded-[5rem] text-black relative overflow-hidden group shadow-[0_0_80px_rgba(16,185,129,0.3)]"
-                    >
-                        <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                            <div className="text-center md:text-left">
-                                <h3 className="text-5xl md:text-7xl font-black tracking-tighter uppercase mb-6 leading-none">JOIN THE <br/>COLLECTIVE.</h3>
-                                <p className="font-bold text-emerald-950 uppercase text-sm tracking-widest max-w-md">Contribute notes, papers, or technical suggestions to help the Rajdhani community grow.</p>
-                            </div>
-                            <a 
-                              href={COMMUNITY_LINK} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="bg-black text-white px-16 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:scale-110 transition-all active:scale-95 shadow-2xl shrink-0 text-center"
-                            >
-                              Join the Community
-                            </a>
-                        </div>
-                        <Heart className="absolute -bottom-20 -right-20 text-emerald-600/20 w-96 h-96 rotate-12" />
-                    </motion.div>
                 </div>
               </section>
 
-              <footer className="py-20 px-6 border-t border-white/5 bg-[#010101] relative text-center md:text-left">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 items-center gap-10">
-                  <div className="flex items-center gap-3 justify-center md:justify-start">
-                     <div className="w-9 h-9 bg-emerald-600 text-white flex items-center justify-center rounded-lg font-black text-xl shadow-lg shadow-emerald-500/20">∆</div>
+              <footer className="py-20 px-6 border-t border-white/5 bg-[#010101] relative">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+                  <div className="flex items-center gap-3">
+                     <div className="w-9 h-9 bg-emerald-600 text-white flex items-center justify-center rounded-lg font-black text-xl">∆</div>
                      <span className="font-black text-lg tracking-tighter uppercase">MathVault</span>
                   </div>
                   <div className="text-[9px] font-black text-stone-700 uppercase tracking-[0.5em]">Built for Rajdhani College by Students</div>
-                  <div className="flex justify-center md:justify-end gap-8 text-[9px] font-black text-stone-600 uppercase tracking-widest">
+                  <div className="flex gap-8 text-[9px] font-black text-stone-600 uppercase tracking-widest">
                      <a href="#" className="hover:text-emerald-400 transition-all">Github</a>
-                     <a 
-                        href={COMMUNITY_LINK} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="hover:text-emerald-400 transition-all"
-                      >
-                        Community
-                      </a>
+                     <a href={COMMUNITY_LINK} className="hover:text-emerald-400 transition-all">Community</a>
                   </div>
                 </div>
               </footer>

@@ -28,7 +28,6 @@ const staggerContainer = {
 
 const MATH_SYMBOLS = ['∫', 'π', '∞', 'Σ', '√', 'Δ', 'θ', 'λ', 'Ω', '∂', '≈', '≠', '±', '≡', '∀', '∃', '∇', '∈', '∉', '⊂', '⊃'];
 
-// --- INITIALIZING LOADER COMPONENT ---
 const VaultLoader = () => (
   <motion.div 
     initial={{ opacity: 1 }}
@@ -62,7 +61,6 @@ const VaultLoader = () => (
   </motion.div>
 );
 
-// --- SYMBOL RAIN TRANSITION ---
 const SymbolRain = () => {
   const rainParticles = useMemo(() => {
     return Array.from({ length: 80 }).map((_, i) => ({
@@ -93,7 +91,6 @@ const SymbolRain = () => {
   );
 };
 
-// --- AMBIENT FLOATING BACKGROUND ---
 const FloatingMathParticles = () => {
   const particles = useMemo(() => {
     return Array.from({ length: 25 }).map((_, i) => ({
@@ -146,7 +143,8 @@ const SemesterPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await axios.get(`${API_BASE_URL}/metadata`, {
+        // FIXED: Endpoint updated to include /maths discipline as per schema
+        const response = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'cores' },
           headers: { 'accept': 'application/json' }
         });
@@ -160,10 +158,11 @@ const SemesterPage = () => {
           }));
           setSubjects(formattedSubjects);
         } else {
-          setError(`No subjects mapped for Semester ${semId} yet.`);
+          setError(`No subjects found for Semester ${semId}.`);
         }
       } catch (err) { 
-        setError("Vault sync failed. Check your network.");
+        setError("Vault synchronization failed. Node unreachable.");
+        console.error("Fetch error:", err);
       } finally { 
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, 1000 - elapsed);
@@ -198,7 +197,6 @@ const SemesterPage = () => {
           >
             {showRain && <SymbolRain />}
             
-            {/* 1. ANIMATED AMBIENT BACKGROUND */}
             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
               <FloatingMathParticles />
               <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full animate-pulse z-[-1]"></div>
@@ -241,7 +239,6 @@ const SemesterPage = () => {
                   </motion.h1>
                 </motion.div>
 
-                {/* SEARCH BOX */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="relative group max-w-2xl">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-stone-600 group-focus-within:text-emerald-500 transition-colors" size={20} />
                   <input 
