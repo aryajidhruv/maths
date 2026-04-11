@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { ArrowLeft, Star, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '../config'; // Using your centralized config
 
 const ReviewsPage = () => {
   const navigate = useNavigate();
@@ -19,31 +20,36 @@ const ReviewsPage = () => {
     rate: 5 
   });
 
-  const GET_URL = 'https://maths-arity.fastapicloud.dev/review/get';
-  const INSERT_URL = 'https://maths-arity.fastapicloud.dev/review/insert';
+  // UPDATED: Fixed endpoints based on OpenAPI schema
+  const GET_REVIEWS_URL = `${API_BASE_URL}/review/get-top`;
+  const INSERT_REVIEW_URL = `${API_BASE_URL}/review/insert`;
 
   useEffect(() => { fetchReviews(); }, []);
 
   const fetchReviews = async () => {
     try {
-      const response = await axios.get(GET_URL);
+      // Added 'top' param as per schema (default 20)
+      const response = await axios.get(GET_REVIEWS_URL, {
+        params: { top: 30 } 
+      });
+      
+      // Schema says: {id: [name, institute, comment, rate]}
       const reviewData = Object.values(response.data);
+      // Reversing to show latest first
       setReviews(reviewData.reverse());
     } catch (err) {
       console.error("Fetch Error:", err);
+      setStatus({ type: 'error', msg: 'Could not sync with the Review Vault.' });
     } finally {
       setLoading(false);
     }
   };
 
-  // UPDATED VALIDATION TO MATCH API (1000 chars)
   const validateForm = () => {
     if (formData.name.trim().length < 2) return "Name is too short.";
     if (formData.institute.trim().length < 2) return "Institute name is too short.";
     if (formData.comment.trim().length < 5) return "Comment must be at least 5 characters.";
     if (formData.name.length > 50 || formData.institute.length > 50) return "Name/Institute exceeds 50 chars.";
-    
-    // Matched to API limit
     if (formData.comment.length > 1000) return "Comment exceeds 1000 characters."; 
     return null;
   };
@@ -60,25 +66,32 @@ const ReviewsPage = () => {
     setStatus({ type: '', msg: '' });
 
     try {
-      const response = await axios.post(INSERT_URL, null, {
+      /**
+       * FIXED: POST request with query parameters as defined in schema.
+       * The schema explicitly places name, institute, etc., in 'parameters' with 'in: query'.
+       */
+      const response = await axios.post(INSERT_REVIEW_URL, null, {
         params: { 
+          name: formData.name.trim(),
           institute: formData.institute.trim(),
           comment: formData.comment.trim(),
-          rate: parseInt(formData.rate),
-          name: formData.name.trim()
+          rate: parseInt(formData.rate)
         }
       });
 
       if (response.status === 200 || response.status === 201) {
-        setStatus({ type: 'success', msg: 'Review Synchronized.' });
+        setStatus({ type: 'success', msg: 'Review Synchronized Successfully.' });
         setFormData({ name: '', institute: '', comment: '', rate: 5 });
-        setTimeout(fetchReviews, 800);
+        // Small delay before refresh for better UX
+        setTimeout(fetchReviews, 1000);
       }
     } catch (err) {
+      // Handling FastAPI's validation error structure
       const apiError = err.response?.data?.detail;
+      const errorMsg = Array.isArray(apiError) ? apiError[0]?.msg : 'Transmission Failed.';
       setStatus({ 
         type: 'error', 
-        msg: typeof apiError === 'string' ? apiError : 'Transmission Failed.' 
+        msg: errorMsg 
       });
     } finally {
       setSubmitting(false);
@@ -98,12 +111,13 @@ const ReviewsPage = () => {
           onClick={() => navigate('/')} 
           className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-500 transition-colors"
         >
-          <ArrowLeft size={16} /> Return
+          <ArrowLeft size={16} /> Return to Home
         </button>
       </nav>
 
       <main className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 mt-12">
         
+        {/* Form Section */}
         <div className="lg:col-span-5">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <h1 className="text-6xl font-black tracking-tighter uppercase mb-10 leading-[0.9]">
@@ -120,7 +134,7 @@ const ReviewsPage = () => {
                   <input 
                     required 
                     maxLength={50}
-                    placeholder="User Name" 
+                    placeholder="e.g. Dhruv Arya" 
                     value={formData.name} 
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-emerald-500/50 outline-none transition-all placeholder:text-stone-600" 
@@ -134,7 +148,7 @@ const ReviewsPage = () => {
                   <input 
                     required 
                     maxLength={50}
-                    placeholder="College/Org" 
+                    placeholder="University" 
                     value={formData.institute} 
                     onChange={(e) => setFormData({...formData, institute: e.target.value})}
                     className="w-full bg-white/[0.05] border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-emerald-500/50 outline-none transition-all placeholder:text-stone-600" 
@@ -167,14 +181,13 @@ const ReviewsPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-2">
                   <label className="text-[10px] font-black uppercase text-emerald-500/70 tracking-widest">Your Experience</label>
-                  {/* UPDATED COUNTER TO 1000 */}
                   <span className="text-[8px] text-stone-700">{formData.comment.length}/1000</span>
                 </div>
                 <textarea 
                   required 
-                  maxLength={1000} // UPDATED TO 1000
+                  maxLength={1000} 
                   rows="4" 
-                  placeholder="Share your experience..." 
+                  placeholder="How was your journey with the Vault?" 
                   value={formData.comment} 
                   onChange={(e) => setFormData({...formData, comment: e.target.value})}
                   className="w-full bg-white/[0.05] border border-white/10 rounded-2xl p-6 text-white focus:border-emerald-500/50 outline-none transition-all resize-none placeholder:text-stone-600" 
@@ -197,27 +210,29 @@ const ReviewsPage = () => {
               </AnimatePresence>
 
               <button 
+                type="submit"
                 disabled={submitting} 
                 className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl hover:bg-emerald-400 transition-all active:scale-95 disabled:opacity-50 flex justify-center gap-3 uppercase tracking-[0.2em] text-[11px] shadow-[0_0_40px_rgba(16,185,129,0.15)]"
               >
-                {submitting ? <Loader2 className="animate-spin" /> : 'SUBMIT'}
+                {submitting ? <Loader2 className="animate-spin" /> : 'TRANSMIT REVIEW'}
               </button>
             </form>
           </motion.div>
         </div>
 
+        {/* Display Section */}
         <div className="lg:col-span-7">
-          {/* Logs display code remains the same */}
           <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10 backdrop-blur-md max-h-[800px] overflow-y-auto custom-scrollbar">
-            <h2 className="text-2xl font-black uppercase tracking-tighter mb-10 border-b border-white/5 pb-6">Reviews</h2>
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-10 border-b border-white/5 pb-6">Global Logs</h2>
             
             {loading ? (
               <div className="py-20 flex flex-col items-center opacity-30">
                 <Loader2 className="animate-spin text-emerald-500 mb-4" size={32} />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Querying Database...</p>
               </div>
             ) : (
               <div className="space-y-6">
-                {reviews.map((rev, idx) => (
+                {reviews.length > 0 ? reviews.map((rev, idx) => (
                   <motion.div 
                     key={idx} 
                     initial={{ opacity: 0, x: 20 }} 
@@ -248,7 +263,11 @@ const ReviewsPage = () => {
                       "{rev[2]}"
                     </p>
                   </motion.div>
-                ))}
+                )) : (
+                  <div className="text-center py-20 text-stone-600 text-[10px] font-black uppercase tracking-widest">
+                    No records found in current segment.
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -257,5 +276,5 @@ const ReviewsPage = () => {
     </div>
   );
 };
-
+ 
 export default ReviewsPage;
