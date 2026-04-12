@@ -91,14 +91,14 @@ const SubjectDetailsPage = () => {
           yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token.token}`,
           'Accept': 'application/json' 
         }
       });
 
-      const resourceUrl = response.data?.resource_url || response.data;
+      const resourceUrl = response.data?.resource_url?.[0];
 
-      if (!resourceUrl || typeof resourceUrl !== 'string') {
+      if (!resourceUrl || typeof resourceUrl !== "string") {
         alert("The requested node is empty in the vault.");
         return;
       }
