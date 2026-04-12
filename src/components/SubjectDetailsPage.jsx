@@ -33,7 +33,7 @@ const SubjectDetailsPage = () => {
         const pyqRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'pyqs', core_id: subjectId }
         });
-        const years = pyqRes.data.sort((a, b) => b - a);
+        const years = Array.isArray(pyqRes.data) ? pyqRes.data.sort((a, b) => b - a) : [];
         setPyqYears(years);
       } catch (err) { 
         console.error("Backend sync failed", err);
@@ -45,7 +45,10 @@ const SubjectDetailsPage = () => {
     fetchData();
   }, [subjectId]);
 
-  // --- NEW: AUTH INITIALIZATION HELPER ---
+  /**
+   * STAGE 1: AUTH INITIALIZATION
+   * Fetches the JWT token required for resource access
+   */
   const getAuthToken = async (resourceType) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/init`, null, {
@@ -55,45 +58,52 @@ const SubjectDetailsPage = () => {
           type: resourceType
         }
       });
-      // Ensure this matches your actual response structure (usually response.data.access_token)
+      // The schema implies successful response returns the token. 
+      // Adjusted to common FastAPI JWT response structure.
       return response.data.access_token || response.data;
     } catch (err) {
-      console.error("Authentication handshake failed", err);
+      console.error("Secure Session Initialization Failed:", err);
       return null;
     }
   };
 
+  /**
+   * STAGE 2: AUTHORIZED RESOURCE ACCESS
+   */
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
     setActionLoading(true);
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
       
-      // 1. Fetch Bearer Token first (Schema Security Requirement)
+      // 1. Handshake with /auth/init to get JWT
       const token = await getAuthToken(resourceType);
       
       if (!token) {
-        alert("Access Denied: Could not initialize secure session.");
+        alert("Security Error: Access token could not be verified.");
         return;
       }
 
-      // 2. Request Resource with Authorization Header
+      // 2. Request Resource with Bearer Token in Headers
       const url = `${API_BASE_URL}/resource/maths/${subjectId}/${resourceType}`;
       const response = await axios.get(url, {
-        params: { unit: unitNo || undefined, yr: year || undefined },
+        params: { 
+          unit: unitNo || undefined, 
+          yr: year || undefined 
+        },
         headers: { 
           'Authorization': `Bearer ${token}`,
-          'accept': 'application/json' 
+          'Accept': 'application/json' 
         }
       });
 
       const resourceUrl = response.data?.resource_url || response.data;
 
       if (!resourceUrl || typeof resourceUrl !== 'string') {
-        alert("Resource node is empty in the vault.");
+        alert("The requested node is empty in the vault.");
         return;
       }
 
-      // 3. Handle Resource Delivery
+      // 3. Delivery Logic
       if (mode === 'download') {
         try {
           const fileRes = await axios.get(resourceUrl, { responseType: 'blob' });
@@ -117,7 +127,8 @@ const SubjectDetailsPage = () => {
         window.open(resourceUrl, '_blank');
       }
     } catch (err) {
-      alert("This resource is currently restricted or unreachable.");
+      console.error("Vault Access Error:", err);
+      alert("Authentication failed or resource is restricted.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
@@ -126,12 +137,11 @@ const SubjectDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
-      {/* Dynamic Background */}
+      {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Navigation */}
       <nav className="sticky top-0 z-[100] bg-black/60 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <button onClick={() => navigate(-1)} className="p-2.5 bg-white/5 border border-white/20 rounded-xl hover:border-emerald-500/50 transition-all">
@@ -142,12 +152,21 @@ const SubjectDetailsPage = () => {
         </div>
       </nav>
 
+      {/* Auth Loader */}
       <AnimatePresence>
         {actionLoading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="animate-spin text-emerald-500" size={48} />
-              <span className="font-black text-[10px] uppercase tracking-[0.5em] text-emerald-500">Authorizing Access</span>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center">
+            <div className="flex flex-col items-center gap-6">
+              <div className="relative">
+                <Loader2 className="animate-spin text-emerald-500" size={64} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="font-black text-[10px] uppercase tracking-[0.6em] text-emerald-500 mb-1">Authorizing Access</p>
+                <p className="text-[8px] uppercase tracking-widest text-white/30 font-bold">Connecting to Secure Node...</p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -163,8 +182,9 @@ const SubjectDetailsPage = () => {
           </h2>
         </header>
 
+        {/* Global Action Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 hover:bg-[#0f0f0f] transition-all text-left shadow-2xl overflow-hidden">
+          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 transition-all text-left shadow-2xl overflow-hidden">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
             <h3 className="text-3xl font-black tracking-tighter uppercase">Exam Papers</h3>
             <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mt-2">Historical PYQ Library</p>
@@ -179,6 +199,7 @@ const SubjectDetailsPage = () => {
           </button>
         </div>
 
+        {/* Unit Breakdown */}
         <section className="space-y-6">
           <h3 className="text-xl font-black tracking-tighter uppercase mb-8 opacity-40">Unit Curriculum</h3>
           {loadingUnits ? (
@@ -209,7 +230,7 @@ const SubjectDetailsPage = () => {
                       
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                       >
                         <Download size={16} /> Download
                       </button>
@@ -229,6 +250,7 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
+      {/* PYQ Year Selection Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
