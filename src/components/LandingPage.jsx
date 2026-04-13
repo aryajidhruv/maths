@@ -2,12 +2,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; 
 import axios from 'axios';
+import ReactGA from "react-ga4"; // Added for Google Analytics
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
   Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
-  MessageCircle, Users, MessageSquareQuote, Star 
+  MessageCircle, Users, MessageSquareQuote, Star, Target // Added Target icon
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
+
+// --- GOOGLE ANALYTICS INITIALIZATION ---
+// Replace with your actual Measurement ID
+ReactGA.initialize("G-XXXXXXXXXX"); 
 
 // --- SHARED ANIMATION VARIANTS ---
 const fadeInUp = {
@@ -153,14 +158,13 @@ const LandingPage = () => {
   const COMMUNITY_LINK = "https://chat.whatsapp.com/HbuIF5IrOQWKdCjOwRPkLJ";
 
   useEffect(() => {
+    // Send initial pageview to Analytics
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+
     const fetchSemesters = async () => {
       const startTime = Date.now();
       if (availableSemesters.length === 0) setLoading(true);
       try {
-        /**
-         * UPDATED: Path aligned with OpenAPI schema: /api/v1/metadata/{discipline}
-         * Parameter 'of' is required.
-         */
         const response = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'cores' },
           headers: { 'accept': 'application/json' }
@@ -186,10 +190,6 @@ const LandingPage = () => {
 
     const fetchReviews = async () => {
       try {
-        /**
-         * UPDATED: Endpoint aligned with OpenAPI schema: /api/v1/review/get-top
-         * Parameter 'top' controls quantity.
-         */
         const response = await axios.get(`${API_BASE_URL}/review/get-top`, {
             params: { top: 3 }
         });
@@ -243,14 +243,16 @@ const LandingPage = () => {
               </div>
 
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
-                <a href="#resources" className="hover:text-emerald-400 transition">Vaults</a>
+                {/* REPLACED Vaults with Motivation */}
+                <button onClick={() => navigate('/motivation')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">Motivation</button>
                 <a href="#about" className="flex items-center gap-2 hover:text-emerald-400 transition">
                   <Users size={14} /> CREATORS
                 </a>
                 <button onClick={() => navigate('/reviews')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">
                   Reviews
                 </button>
-                <button className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold">CONTACT US</button>
+                {/* NEW Contact Page Navigation */}
+                <button onClick={() => navigate('/contact')} className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold uppercase tracking-widest">CONTACT US</button>
               </div>
 
               <button 
@@ -283,19 +285,14 @@ const LandingPage = () => {
                       <div className="space-y-4">
                         <p className="text-emerald-500 font-black text-[10px] tracking-[0.4em] uppercase opacity-50">Navigation</p>
                         <nav className="flex flex-col gap-8">
-                          <a href="#resources" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Vaults</a>
+                          <button onClick={() => { setIsMenuOpen(false); navigate('/motivation'); }} className="text-left text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Motivation</button>
                           <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors flex items-center gap-2">
                             Creators <Users size={28} />
                           </a>
                           <button onClick={() => { setIsMenuOpen(false); navigate('/reviews'); }} className="text-left text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Reviews</button>
-                          <a href="#" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</a>
+                          <button onClick={() => { setIsMenuOpen(false); navigate('/contact'); }} className="text-left text-4xl font-black tracking-tighter uppercase hover:text-emerald-500 transition-colors">Contact</button>
                         </nav>
                       </div>
-                    </div>
-                    <div className="mt-auto pb-6">
-                      <button className="w-full bg-emerald-500 text-black py-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
-                        <Mail size={14}/> Contact Team
-                      </button>
                     </div>
                   </motion.div>
                 </>
@@ -329,30 +326,6 @@ const LandingPage = () => {
                   </motion.div>
                 </motion.div>
               </header>
-
-              {/* --- CORE OFFERINGS BENTO --- */}
-              <motion.section 
-                initial="hidden" 
-                whileInView="visible" 
-                viewport={{ once: true, margin: "-100px" }} 
-                variants={staggerContainer} 
-                className="max-w-6xl mx-auto px-6 py-10"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {[
-                      { icon: <FileText size={20}/>, title: "PYQ PAPERS", desc: "Organized Previous years.", color: "emerald" },
-                      { icon: <BookOpen size={20}/>, title: "HAND NOTES", desc: "DU Faculty Aligned.", color: "blue" },
-                      { icon: <Layout size={20}/>, title: "SYLLABUS", desc: "Direct Exam Mapping.", color: "purple" },
-                      { icon: <Video size={20}/>, title: "LECTURES", desc: "Visual Theorem Proofs.", color: "red" }
-                    ].map((item, idx) => (
-                      <motion.div key={idx} variants={fadeInUp} whileHover={{ y: -8 }} className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all backdrop-blur-sm">
-                          <div className={`p-3 bg-${item.color}-500/10 text-${item.color}-500 w-fit rounded-xl mb-6 group-hover:scale-110 transition-transform`}>{item.icon}</div>
-                          <h4 className="text-xl font-black mb-1 tracking-tight">{item.title}</h4>
-                          <p className="text-stone-500 text-[9px] font-bold uppercase tracking-widest leading-relaxed">{item.desc}</p>
-                      </motion.div>
-                    ))}
-                </div>
-              </motion.section>
 
               {/* --- SEMESTER VAULT SECTION --- */}
               <section id="resources" className="py-32 px-6 relative">
@@ -393,57 +366,6 @@ const LandingPage = () => {
                 </div>
               </section>
 
-              {/* --- REVIEWS BENTO SECTION --- */}
-              <section className="py-24 px-6 relative bg-white/[0.01]">
-                <div className="max-w-6xl mx-auto">
-                  <div className="flex justify-between items-end mb-12">
-                    <h2 className="text-4xl font-black tracking-tighter uppercase">Student <span className="text-emerald-500 italic">Reviews</span></h2>
-                    <button onClick={() => navigate('/reviews')} className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] flex items-center gap-2 hover:gap-3 transition-all">
-                      View All <ArrowUpRight size={14}/>
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {reviewsLoading ? (
-                      <div className="col-span-full py-12 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>
-                    ) : (
-                      reviews.map((rev, idx) => (
-                        <motion.div 
-                          key={idx}
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl relative overflow-hidden group hover:border-emerald-500/30 transition-all"
-                        >
-                          <MessageSquareQuote size={40} className="absolute -right-2 -bottom-2 text-white/[0.03] rotate-12 group-hover:text-emerald-500/10 transition-colors" />
-                          <div className="flex flex-col h-full">
-                            <div className="mb-6 flex items-center gap-3">
-                              <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center font-black text-emerald-500 uppercase text-xs">
-                                {rev[0]?.charAt(0)}
-                              </div>
-                              <div className="flex-grow">
-                                <p className="font-black text-[10px] uppercase tracking-wider">{rev[0]}</p>
-                                <p className="text-[8px] text-stone-500 uppercase font-bold">{rev[1]}</p>
-                              </div>
-                              <div className="flex gap-0.5">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    size={10} 
-                                    fill={i < (rev[3] || 5) ? "#10b981" : "none"} 
-                                    className={i < (rev[3] || 5) ? "text-emerald-500" : "text-white/10"} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-stone-300 text-sm italic leading-relaxed">"{rev[2]}"</p>
-                          </div>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </section>
-
               {/* --- ABOUT US / THE TEAM SECTION --- */}
               <section id="about" className="py-52 px-6 relative bg-[#080808]/50">
                 <div className="max-w-7xl mx-auto relative">
@@ -455,41 +377,40 @@ const LandingPage = () => {
                             THE BRAINS <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-emerald-200">BEHIND THE VAULT.</span>
                         </h2>
-                        <div className="h-1 w-40 bg-emerald-500 mb-12"></div>
-                        <p className="text-xl md:text-3xl text-stone-400 max-w-4xl leading-snug font-medium tracking-tight">
-                            We are final-year B.Sc Mathematics Honors students at Rajdhani College. 
-                            What started as a personal struggle to find quality resources evolved 
-                            into a high-performance ecosystem for the entire DU community.
-                        </p>
                     </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        {[
-                            { name: "Dhruv Arya", role: "Frontend Architecture", icon: <Monitor className="text-blue-500" size={40}/>, desc: "Mastermind behind the high-performance user interface and seamless navigation logic." },
-                            { name: "Aditya Balotra", role: "Backend Systems", icon: <Database className="text-emerald-500" size={40}/>, desc: "The engineer responsible for the secure, globally-distributed vault infrastructure and API core." }
-                        ].map((member, i) => (
-                            <motion.div 
-                                key={i} 
-                                initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
-                                whileInView={{ opacity: 1, x: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8 }}
-                                whileHover={{ y: -10 }}
-                                className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden"
-                            >
-                                <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-20 transition-opacity">{member.icon}</div>
-                                <div className="w-20 h-20 bg-white/5 text-white flex items-center justify-center rounded-3xl mb-10 group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-all">{member.icon}</div>
-                                <h4 className="text-4xl font-black mb-3 tracking-tighter uppercase">{member.name}</h4>
-                                <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.4em] mb-8">{member.role}</p>
-                                <p className="text-lg text-stone-500 leading-relaxed font-medium max-w-sm">{member.desc}</p>
-                            </motion.div>
-                        ))}
+                        {/* UPDATED: Creator links redirecting to GitHub */}
+                        <motion.div 
+                            onClick={() => window.open('https://github.com/aryajidhruv', '_blank')}
+                            initial={{ opacity: 0, x: -50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-20 transition-opacity"><Monitor size={40}/></div>
+                            <div className="w-20 h-20 bg-white/5 text-white flex items-center justify-center rounded-3xl mb-10 group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-all"><Monitor size={40}/></div>
+                            <h4 className="text-4xl font-black mb-3 tracking-tighter uppercase">Dhruv Arya</h4>
+                            <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.4em] mb-8">Frontend Architecture</p>
+                            <p className="text-lg text-stone-500 leading-relaxed font-medium max-w-sm">Mastermind behind the high-performance user interface and seamless navigation logic.</p>
+                        </motion.div>
+
+                        <motion.div 
+                            onClick={() => window.open('https://github.com/aditya7balotra', '_blank')} // Replace with Aditya's GitHub
+                            initial={{ opacity: 0, x: 50 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:opacity-20 transition-opacity"><Database size={40}/></div>
+                            <div className="w-20 h-20 bg-white/5 text-white flex items-center justify-center rounded-3xl mb-10 group-hover:bg-emerald-500/10 group-hover:text-emerald-500 transition-all"><Database size={40}/></div>
+                            <h4 className="text-4xl font-black mb-3 tracking-tighter uppercase">Aditya Balotra</h4>
+                            <p className="text-xs font-black text-emerald-500 uppercase tracking-[0.4em] mb-8">Backend Systems</p>
+                            <p className="text-lg text-stone-500 leading-relaxed font-medium max-w-sm">The engineer responsible for the secure, globally-distributed vault infrastructure and API core.</p>
+                        </motion.div>
                     </div>
 
                     <motion.div 
                       initial={{ scale: 0.95, opacity: 0 }} 
                       whileInView={{ scale: 1, opacity: 1 }} 
-                      viewport={{ once: true }}
                       className="mt-32 p-20 bg-emerald-500 rounded-[5rem] text-black relative overflow-hidden group shadow-[0_0_80px_rgba(16,185,129,0.3)]"
                     >
                         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
@@ -506,7 +427,6 @@ const LandingPage = () => {
                               Join the Community
                             </a>
                         </div>
-                        <Heart className="absolute -bottom-20 -right-20 text-emerald-600/20 w-96 h-96 rotate-12" />
                     </motion.div>
                 </div>
               </section>
@@ -519,15 +439,8 @@ const LandingPage = () => {
                   </div>
                   <div className="text-[9px] font-black text-stone-700 uppercase tracking-[0.5em]">Built for Rajdhani College by Students</div>
                   <div className="flex justify-center md:justify-end gap-8 text-[9px] font-black text-stone-600 uppercase tracking-widest">
-                     <a href="#" className="hover:text-emerald-400 transition-all">Github</a>
-                     <a 
-                        href={COMMUNITY_LINK} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="hover:text-emerald-400 transition-all"
-                      >
-                        Community
-                      </a>
+                     <a href="https://github.com/aryajidhruv/maths" target="_blank" className="hover:text-emerald-400 transition-all uppercase tracking-widest">Github</a>
+                     <button onClick={() => navigate('/contact')} className="hover:text-emerald-400 transition-all uppercase tracking-widest">Contact</button>
                   </div>
                 </div>
               </footer>
