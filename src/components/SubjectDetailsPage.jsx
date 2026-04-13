@@ -13,6 +13,9 @@ const SubjectDetailsPage = () => {
   const { state } = useLocation();
   const subjectName = state?.subjectName || "Subject Details";
 
+  // Sanitize subjectId for backend (removes prefixes like 'h:' and converts to integer)
+  const cleanCoreId = subjectId ? parseInt(subjectId.replace(/\D/g, ''), 10) : null;
+
   const [units, setUnits] = useState([]);
   const [pyqYears, setPyqYears] = useState([]); 
   const [loadingUnits, setLoadingUnits] = useState(false);
@@ -22,47 +25,49 @@ const SubjectDetailsPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!cleanCoreId) return;
+      
       setLoadingUnits(true);
       setLoadingYears(true);
       try {
+        // Fetch Units Metadata
         const unitRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
-          params: { of: 'units', core_id: subjectId }
+          params: { of: 'units', core_id: cleanCoreId }
         });
         setUnits(Array.isArray(unitRes.data) ? unitRes.data : Object.values(unitRes.data));
 
+        // Fetch PYQ Metadata
         const pyqRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
-          params: { of: 'pyqs', core_id: subjectId }
+          params: { of: 'pyqs', core_id: cleanCoreId }
         });
         const years = Array.isArray(pyqRes.data) ? pyqRes.data.sort((a, b) => b - a) : [];
         setPyqYears(years);
       } catch (err) { 
-        console.error("Backend sync failed", err);
+        console.error("Backend sync failed:", err.response?.data || err.message);
       } finally { 
         setLoadingUnits(false); 
         setLoadingYears(false);
       }
     };
     fetchData();
-  }, [subjectId]);
+  }, [cleanCoreId]);
 
   /**
    * STAGE 1: AUTH INITIALIZATION
-   * Fetches the JWT token required for resource access
    */
   const getAuthToken = async (resourceType) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/init`, null, {
         params: {
           discipline: 'maths',
-          core_id: subjectId,
+          core_id: cleanCoreId.toString(), // Schema says string for this endpoint
           type: resourceType
         }
       });
-      // The schema implies successful response returns the token. 
-      // Adjusted to common FastAPI JWT response structure.
+      // Adjusting to standard JWT responses: check for access_token or the raw string
       return response.data.access_token || response.data;
     } catch (err) {
-      console.error("Secure Session Initialization Failed:", err);
+      console.error("Secure Session Initialization Failed:", err.response?.data || err);
       return null;
     }
   };
@@ -75,7 +80,6 @@ const SubjectDetailsPage = () => {
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
       
-      // 1. Handshake with /auth/init to get JWT
       const token = await getAuthToken(resourceType);
       
       if (!token) {
@@ -83,52 +87,35 @@ const SubjectDetailsPage = () => {
         return;
       }
 
-      // 2. Request Resource with Bearer Token in Headers
-      const url = `${API_BASE_URL}/resource/maths/${subjectId}/${resourceType}`;
+      // The schema for resources requires core_id as a path parameter (integer)
+      const url = `${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`;
+      
       const response = await axios.get(url, {
         params: { 
           unit: unitNo || undefined, 
           yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token.token}`,
+          'Authorization': `Bearer ${token}`, // token is usually the string itself from init
           'Accept': 'application/json' 
         }
       });
 
-      const resourceUrl = response.data?.resource_url[0];
-      console.log(resourceUrl);
+      const resourceUrl = response.data?.resource_url?.[0];
 
-      if (!resourceUrl || typeof resourceUrl !== 'string') {
+      if (!resourceUrl) {
         alert("The requested node is empty in the vault.");
         return;
       }
 
-      // 3. Delivery Logic
       if (mode === 'download') {
-        try {
-          const fileRes = await axios.get(resourceUrl, { responseType: 'blob' });
-          const blob = new Blob([fileRes.data], { type: 'application/pdf' });
-          const blobUrl = window.URL.createObjectURL(blob);
-          
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          const identifier = unitNo ? `Unit_${unitNo}` : `Session_${year}`;
-          const fileName = `${subjectName}_${identifier}_${type}.pdf`.replace(/\s+/g, '_');
-          
-          link.setAttribute('download', fileName);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(blobUrl);
-        } catch (downloadErr) {
-          window.open(resourceUrl, '_blank');
-        }
+        // Direct download logic
+        window.open(resourceUrl, '_blank');
       } else {
         window.open(resourceUrl, '_blank');
       }
     } catch (err) {
-      console.error("Vault Access Error:", err);
+      console.error("Vault Access Error:", err.response?.data || err);
       alert("Authentication failed or resource is restricted.");
     } finally {
       setActionLoading(false);
@@ -183,7 +170,6 @@ const SubjectDetailsPage = () => {
           </h2>
         </header>
 
-        {/* Global Action Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
           <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 transition-all text-left shadow-2xl overflow-hidden">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
@@ -200,7 +186,6 @@ const SubjectDetailsPage = () => {
           </button>
         </div>
 
-        {/* Unit Breakdown */}
         <section className="space-y-6">
           <h3 className="text-xl font-black tracking-tighter uppercase mb-8 opacity-40">Unit Curriculum</h3>
           {loadingUnits ? (
@@ -251,7 +236,7 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* PYQ Year Selection Modal */}
+      {/* PYQ Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">

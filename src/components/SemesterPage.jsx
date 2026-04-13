@@ -143,7 +143,7 @@ const SemesterPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // FIXED: Endpoint updated to include /maths discipline as per schema
+        // Fetch core subjects for the maths discipline
         const response = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'cores' },
           headers: { 'accept': 'application/json' }
@@ -152,10 +152,16 @@ const SemesterPage = () => {
         const currentSemSubjects = response.data[semId];
         
         if (currentSemSubjects) {
-          const formattedSubjects = Object.entries(currentSemSubjects).map(([id, name]) => ({
-            id, 
-            name: name.charAt(0).toUpperCase() + name.slice(1), 
-          }));
+          const formattedSubjects = Object.entries(currentSemSubjects).map(([id, name]) => {
+            // STRATEGY: Strip any non-numeric prefixes (like 'h:') so the ID is a clean integer
+            // for the next API call, preventing 422 errors.
+            const numericId = id.replace(/\D/g, ''); 
+            
+            return {
+              id: numericId, 
+              name: name.charAt(0).toUpperCase() + name.slice(1), 
+            };
+          });
           setSubjects(formattedSubjects);
         } else {
           setError(`No subjects found for Semester ${semId}.`);
