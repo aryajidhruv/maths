@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 // Changed Github to GithubIcon for better compatibility with recent lucide versions
-import { ArrowLeft, Mail, MessageCircle, Github as GithubIcon, Globe, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, Mail, MessageCircle,  Globe, Send, Sparkles } from 'lucide-react';
 
 // --- SHARED ANIMATION VARIANTS ---
 const fadeInUp = {
