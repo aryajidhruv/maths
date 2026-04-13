@@ -13,7 +13,8 @@ const SubjectDetailsPage = () => {
   const { state } = useLocation();
   const subjectName = state?.subjectName || "Subject Details";
 
-  // Sanitize subjectId for backend (removes prefixes like 'h:' and converts to integer)
+  // --- FIX: SANITIZE ID FOR BACKEND ---
+  // Transforms "h:1" into integer 1 to prevent 422 errors
   const cleanCoreId = subjectId ? parseInt(subjectId.replace(/\D/g, ''), 10) : null;
 
   const [units, setUnits] = useState([]);
@@ -26,24 +27,24 @@ const SubjectDetailsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!cleanCoreId) return;
-      
+
       setLoadingUnits(true);
       setLoadingYears(true);
       try {
-        // Fetch Units Metadata
+        // Fetch Unit Names
         const unitRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'units', core_id: cleanCoreId }
         });
         setUnits(Array.isArray(unitRes.data) ? unitRes.data : Object.values(unitRes.data));
 
-        // Fetch PYQ Metadata
+        // Fetch PYQ Years
         const pyqRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'pyqs', core_id: cleanCoreId }
         });
         const years = Array.isArray(pyqRes.data) ? pyqRes.data.sort((a, b) => b - a) : [];
         setPyqYears(years);
       } catch (err) { 
-        console.error("Backend sync failed:", err.response?.data || err.message);
+        console.error("Metadata Sync Failed:", err.response?.data || err);
       } finally { 
         setLoadingUnits(false); 
         setLoadingYears(false);
@@ -60,11 +61,11 @@ const SubjectDetailsPage = () => {
       const response = await axios.post(`${API_BASE_URL}/auth/init`, null, {
         params: {
           discipline: 'maths',
-          core_id: cleanCoreId.toString(), // Schema says string for this endpoint
+          core_id: cleanCoreId.toString(), // Endpoint expects string for core_id
           type: resourceType
         }
       });
-      // Adjusting to standard JWT responses: check for access_token or the raw string
+      // Adjusting to handle both direct string or nested access_token object
       return response.data.access_token || response.data;
     } catch (err) {
       console.error("Secure Session Initialization Failed:", err.response?.data || err);
@@ -80,14 +81,17 @@ const SubjectDetailsPage = () => {
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
       
-      const token = await getAuthToken(resourceType);
+      const tokenData = await getAuthToken(resourceType);
       
+      // Extract the actual token string (handling if backend returns {token: "..."} or just "...")
+      const token = typeof tokenData === 'object' ? tokenData.token || tokenData.access_token : tokenData;
+
       if (!token) {
         alert("Security Error: Access token could not be verified.");
         return;
       }
 
-      // The schema for resources requires core_id as a path parameter (integer)
+      // Path parameter core_id must be integer as per schema
       const url = `${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`;
       
       const response = await axios.get(url, {
@@ -96,7 +100,7 @@ const SubjectDetailsPage = () => {
           yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token}`, // token is usually the string itself from init
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json' 
         }
       });
@@ -108,12 +112,9 @@ const SubjectDetailsPage = () => {
         return;
       }
 
-      if (mode === 'download') {
-        // Direct download logic
-        window.open(resourceUrl, '_blank');
-      } else {
-        window.open(resourceUrl, '_blank');
-      }
+      // 3. Delivery
+      window.open(resourceUrl, '_blank');
+
     } catch (err) {
       console.error("Vault Access Error:", err.response?.data || err);
       alert("Authentication failed or resource is restricted.");
@@ -140,20 +141,14 @@ const SubjectDetailsPage = () => {
         </div>
       </nav>
 
-      {/* Auth Loader */}
+      {/* Auth Loader Overlay */}
       <AnimatePresence>
         {actionLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center">
             <div className="flex flex-col items-center gap-6">
-              <div className="relative">
-                <Loader2 className="animate-spin text-emerald-500" size={64} />
-                <div className="absolute inset-0 flex items-center justify-center">
-                   <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                </div>
-              </div>
+              <Loader2 className="animate-spin text-emerald-500" size={64} />
               <div className="text-center">
-                <p className="font-black text-[10px] uppercase tracking-[0.6em] text-emerald-500 mb-1">Authorizing Access</p>
-                <p className="text-[8px] uppercase tracking-widest text-white/30 font-bold">Connecting to Secure Node...</p>
+                <p className="font-black text-[10px] uppercase tracking-[0.6em] text-emerald-500">Authorizing Access</p>
               </div>
             </div>
           </motion.div>
@@ -171,7 +166,7 @@ const SubjectDetailsPage = () => {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
-          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 transition-all text-left shadow-2xl overflow-hidden">
+          <button onClick={() => setIsYearModalOpen(true)} className="group relative p-8 rounded-[2.5rem] bg-[#0A0A0A] border border-white/10 hover:border-emerald-500/60 transition-all text-left shadow-2xl">
             <div className="mb-12 p-4 bg-emerald-500/10 text-emerald-500 rounded-2xl w-fit border border-emerald-500/20 group-hover:border-emerald-500 transition-all"><FileText size={32} /></div>
             <h3 className="text-3xl font-black tracking-tighter uppercase">Exam Papers</h3>
             <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mt-2">Historical PYQ Library</p>
@@ -203,27 +198,27 @@ const SubjectDetailsPage = () => {
                   <div className="flex flex-col lg:flex-row lg:items-center gap-8">
                     <div className="flex-1 flex items-center gap-6">
                       <div className="w-14 h-14 shrink-0 rounded-2xl bg-black border border-white/10 flex items-center justify-center font-black text-xl text-emerald-500 group-hover:border-emerald-500 transition-all">{i + 1}</div>
-                      <p className="font-black text-xl tracking-tight leading-tight max-w-md">{unit}</p>
+                      <p className="font-black text-xl tracking-tight leading-tight">{unit}</p>
                     </div>
                     
                     <div className="flex flex-wrap gap-3 lg:ml-auto">
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'preview')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                        className="px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
                       >
                         <Eye size={16} /> Preview
                       </button>
                       
                       <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                        className="px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all"
                       >
                         <Download size={16} /> Download
                       </button>
 
                       <button 
                         onClick={() => handleResourceAccess('videos', i + 1)} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
+                        className="px-6 py-4 bg-white/5 border border-white/10 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
                       >
                         <PlayCircle size={16} /> Video
                       </button>
@@ -236,11 +231,11 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* PYQ Modal */}
+      {/* PYQ Year Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-[3.5rem] p-12 relative shadow-[0_0_100px_rgba(0,0,0,1)]">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#0A0A0A] border border-white/10 w-full max-w-md rounded-[3.5rem] p-12 relative">
               <button onClick={() => setIsYearModalOpen(false)} className="absolute top-10 right-10 text-stone-500 hover:text-white transition-colors"><X size={28} /></button>
               <h2 className="text-2xl font-black uppercase text-center mb-10 tracking-widest">Select Session</h2>
               {loadingYears ? <Loader2 className="animate-spin mx-auto text-emerald-500" /> : (
