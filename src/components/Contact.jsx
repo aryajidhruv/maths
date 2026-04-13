@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// Changed Github to GithubIcon for better compatibility with recent lucide versions
-import { ArrowLeft, Mail, MessageCircle,  Globe, Send, Sparkles } from 'lucide-react';
+// Removed Github and Globe to keep the import clean and error-free
+import { ArrowLeft, Mail, MessageCircle, Send, Sparkles } from 'lucide-react';
 
 // --- SHARED ANIMATION VARIANTS ---
 const fadeInUp = {
@@ -61,13 +61,8 @@ const Contact = () => {
       label: "WhatsApp Community",
       value: "Join 500+ Students",
       action: () => window.open(COMMUNITY_LINK, '_blank')
-    },
-    {
-      icon: <GithubIcon className="text-emerald-500" size={24} />,
-      label: "Open Source",
-      value: "Contribute on GitHub",
-      action: () => window.open('https://github.com/aryajidhruv', '_blank')
     }
+    // Github option removed to resolve reference errors
   ];
 
   return (
@@ -131,7 +126,7 @@ const Contact = () => {
             <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div>
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-500 block mb-2">Your Name</label>
-                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm" placeholder="e.g. Dhruv Arya" />
+                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm" placeholder="e.g. Dhruv" />
               </div>
               <div>
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-500 block mb-2">Message</label>
@@ -143,6 +138,7 @@ const Contact = () => {
             </form>
           </div>
         </motion.div>
+
       </main>
 
       <div className="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
