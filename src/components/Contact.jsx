@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// Removed Github and Globe to keep the import clean and error-free
 import { ArrowLeft, Mail, MessageCircle, Send, Sparkles } from 'lucide-react';
+import ReactGA from 'react-ga4';
 
-// --- SHARED ANIMATION VARIANTS ---
+// 1. Initialize GA4 with your ID
+// (Pro Tip: Do this once in your App.jsx or main.jsx instead of inside a component)
+ReactGA.initialize("G-9JDG6LLSQ8");
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { 
@@ -49,20 +52,46 @@ const Contact = () => {
   const navigate = useNavigate();
   const COMMUNITY_LINK = "https://chat.whatsapp.com/HbuIF5IrOQWKdCjOwRPkLJ";
 
+  // --- ANALYTICS LOGIC ---
+  useEffect(() => {
+    // 2. Track Page View on mount
+    ReactGA.send({ hitType: "pageview", page: "/contact", title: "Contact Page" });
+  }, []);
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    
+    // 3. Track Form Submission Event
+    ReactGA.event({
+      category: "Lead_Generation",
+      action: "Submit_Contact_Form",
+      label: "MathVault Contact"
+    });
+
+    console.log("Message Transmitted to Analytics");
+  };
+
   const contactMethods = [
     {
       icon: <Mail className="text-emerald-500" size={24} />,
       label: "Email Support",
       value: "support@mathvault.com",
-      action: () => window.location.href = "mailto:support@mathvault.com"
+      action: () => {
+        // Track Email Clicks
+        ReactGA.event({ category: "Contact", action: "Email_Clicked" });
+        window.location.href = "mailto:support@mathvault.com";
+      }
     },
     {
       icon: <MessageCircle className="text-emerald-500" size={24} />,
       label: "WhatsApp Community",
       value: "Join 500+ Students",
-      action: () => window.open(COMMUNITY_LINK, '_blank')
+      action: () => {
+        // Track WhatsApp Joins
+        ReactGA.event({ category: "Social", action: "WhatsApp_Joined" });
+        window.open(COMMUNITY_LINK, '_blank');
+      }
     }
-    // Github option removed to resolve reference errors
   ];
 
   return (
@@ -123,16 +152,16 @@ const Contact = () => {
           <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full"></div>
           <div className="relative p-10 bg-white/[0.03] border border-white/10 backdrop-blur-2xl rounded-[3rem] shadow-2xl">
             <h3 className="text-2xl font-black uppercase tracking-tighter mb-8">Quick Message</h3>
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-6" onSubmit={handleFormSubmit}>
               <div>
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-500 block mb-2">Your Name</label>
-                <input type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm" placeholder="e.g. Dhruv" />
+                <input required type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm" placeholder="e.g. Your Name" />
               </div>
               <div>
                 <label className="text-[9px] font-black uppercase tracking-[0.3em] text-stone-500 block mb-2">Message</label>
-                <textarea rows="4" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm resize-none" placeholder="What's on your mind?"></textarea>
+                <textarea required rows="4" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 focus:border-emerald-500/50 outline-none transition-all text-sm resize-none" placeholder="What's on your mind?"></textarea>
               </div>
-              <button className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all active:scale-95 shadow-xl shadow-emerald-500/10">
+              <button type="submit" className="w-full bg-emerald-500 text-black font-black py-5 rounded-2xl uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 hover:bg-emerald-400 transition-all active:scale-95 shadow-xl shadow-emerald-500/10">
                 <Send size={14} /> Transmit Message
               </button>
             </form>
