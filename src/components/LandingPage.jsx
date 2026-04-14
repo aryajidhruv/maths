@@ -135,9 +135,9 @@ const StatsBar = () => {
   const [inView, setInView] = useState(false);
   const stats = [
     { label: 'PYQs Archived', value: 100, suffix: '+' },
-    { label: 'Semesters Covered', value: 6, suffix: '' },
+    { label: 'Semesters Covered', value: 8, suffix: '' },
     { label: 'Notes Uploaded', value: 20, suffix: '+' },
-    { label: 'Students Helped', value: 10, suffix: '+' },
+    { label: 'Students Helped', value: 20, suffix: '+' },
   ];
 
   return (
