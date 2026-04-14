@@ -119,9 +119,9 @@ const CHANNELS = {
   email: {
     icon: Mail,
     label: 'Send us an email',
-    href: 'mailto:mathvault.du@gmail.com',
+    href: 'aryajiidhruv@gmail.com',
     cta: 'Open Email',
-    sub: 'mathvault.du@gmail.com',
+    sub: 'aryajiidhruv@gmail',
   },
   community: {
     icon: MessageCircle,
