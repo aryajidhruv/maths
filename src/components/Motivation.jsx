@@ -161,7 +161,7 @@ const Motivation = () => {
           variants={staggerContainer}
           className="py-28 grid grid-cols-2 md:grid-cols-4 gap-12"
         >
-          <StatBlock value="6" label="Semesters Covered" />
+          <StatBlock value="8" label="Semesters Covered" />
           <StatBlock value="NEP" label="2026 Aligned" />
           <StatBlock value="100%" label="Free. Always." />
           <StatBlock value="∞" label="Room to Grow" />

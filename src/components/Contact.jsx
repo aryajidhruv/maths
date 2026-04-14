@@ -329,7 +329,7 @@ const ContactPage = () => {
                 Best for anything that needs context — broken resources, files to add, or joining the team.
               </p>
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 group-hover:text-emerald-300 transition-colors">
-                MathVaultemail.com <ArrowUpRight size={13} />
+                GMAIL.COM <ArrowUpRight size={13} />
               </div>
             </motion.a>
 
