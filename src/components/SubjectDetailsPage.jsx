@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import ReactGA from 'react-ga4';
 
 const SubjectDetailsPage = () => {
   const { subjectId } = useParams(); 
@@ -76,6 +77,12 @@ const SubjectDetailsPage = () => {
    * STAGE 2: AUTHORIZED RESOURCE ACCESS
    */
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
+
+    ReactGA.event({
+      category: "Resource Access",
+      action: `${type}_${mode}`, // e.g., "notes_download" or "syllabus_preview"
+      label: `${subjectName} ${unitNo ? '- Unit ' + unitNo : ''} ${year ? '- Year ' + year : ''}`,
+    });
     setActionLoading(true);
     try {
       

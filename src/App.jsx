@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom'; // Removed 'BrowserRouter as Router'
 import ReactGA from 'react-ga4';
 
 import ScrollToTop from './ScrollToTop';
@@ -10,25 +10,23 @@ import ReviewsPage from './components/ReviewsPage';
 import Motivation from './components/Motivation';
 import Contact from './components/Contact';
 
-// Replace with your actual Measurement ID from Google Analytics
-const TRACKING_ID = "G-XXXXXXXXXX"; 
-ReactGA.initialize("G-9JDG6LLSQ8");
-
-// Component to handle page view tracking
-const AnalyticsTracker = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
-  }, [location]);
-
-  return null;
-};
+// This is correct - initialized once outside
+const TRACKING_ID = "G-9JDG6LLSQ8"; 
+ReactGA.initialize(TRACKING_ID);
 
 function App() {
+  const location = useLocation();
+
+  // Integrated the tracker directly into App to keep it simple
+  useEffect(() => {
+    ReactGA.send({ 
+      hitType: "pageview", 
+      page: location.pathname + location.search 
+    });
+  }, [location]);
+
   return (
-    <Router>
-      <AnalyticsTracker />
+    <>
       <ScrollToTop /> 
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -38,7 +36,7 @@ function App() {
         <Route path="/semester/:semId" element={<SemesterPage />} />
         <Route path="/semester/:semId/subject/:subjectId" element={<SubjectDetailsPage />} />
       </Routes>
-    </Router>
+    </>
   );
 }
 

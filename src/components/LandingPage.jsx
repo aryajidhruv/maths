@@ -1,18 +1,15 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; 
 import axios from 'axios';
-import ReactGA from "react-ga4"; // Added for Google Analytics
 import { 
   Loader2, Menu, X, ArrowUpRight, BookOpen, 
   Sparkles, FileText, Layout, Video, Heart, GraduationCap, Database, Monitor, Mail,
-  MessageCircle, Users, MessageSquareQuote, Star, Target // Added Target icon
+  MessageCircle, Users, MessageSquareQuote, Star, Target, ChevronUp, FileQuestion,
+  StickyNote, Film, ClipboardList
 } from 'lucide-react'; 
 import { API_BASE_URL } from '../config';
-
-// --- GOOGLE ANALYTICS INITIALIZATION ---
-// Replace with your actual Measurement ID
-ReactGA.initialize("G-XXXXXXXXXX"); 
+import ReactGA from 'react-ga4';
 
 // --- SHARED ANIMATION VARIANTS ---
 const fadeInUp = {
@@ -41,13 +38,13 @@ const MATH_SYMBOLS = ['∫', 'π', '∞', 'Σ', '√', 'Δ', 'θ', 'λ', 'Ω', '
 const VaultLoader = () => (
   <motion.div 
     initial={{ opacity: 1 }}
-    exit={{ opacity: 0, transition: { duration: 0.4 } }}
+    exit={{ opacity: 0, transition: { duration: 0.3 } }}
     className="fixed inset-0 z-[1000] bg-[#050505] flex flex-col items-center justify-center p-6"
   >
     <div className="relative flex flex-col items-center">
       <motion.div 
         animate={{ rotate: 360, scale: [1, 1.05, 1] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
         className="w-14 h-14 bg-emerald-600/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center rounded-xl font-black text-2xl mb-6 shadow-[0_0_40px_rgba(16,185,129,0.1)] relative z-10"
       >
         ∆
@@ -55,7 +52,7 @@ const VaultLoader = () => (
 
       <motion.p 
         animate={{ opacity: [0.4, 1, 0.4] }}
-        transition={{ duration: 1, repeat: Infinity }}
+        transition={{ duration: 0, repeat: Infinity }}
         className="text-[9px] font-black tracking-[0.6em] uppercase text-emerald-500 mb-4 relative z-10"
       >
         Initializing Vault
@@ -72,37 +69,6 @@ const VaultLoader = () => (
     </div>
   </motion.div>
 );
-
-// --- 100+ SYMBOL RAIN TRANSITION ---
-const SymbolRain = () => {
-  const rainParticles = useMemo(() => {
-    return Array.from({ length: 110 }).map((_, i) => ({
-      id: i,
-      char: MATH_SYMBOLS[Math.floor(Math.random() * MATH_SYMBOLS.length)],
-      left: `${Math.random() * 100}%`,
-      delay: Math.random() * 0.8,
-      duration: 1.5 + Math.random() * 2,
-      size: 12 + Math.random() * 35,
-    }));
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-[900] pointer-events-none overflow-hidden">
-      {rainParticles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: ['0vh', '115vh'], opacity: [0, 1, 0.5, 0] }}
-          transition={{ duration: p.duration, delay: p.delay, ease: "circIn" }}
-          className="absolute font-serif text-emerald-500/40"
-          style={{ left: p.left, fontSize: p.size }}
-        >
-          {p.char}
-        </motion.div>
-      ))}
-    </div>
-  );
-};
 
 // --- PERSISTENT AMBIENT BACKGROUND SYMBOLS ---
 const FloatingMathParticles = () => {
@@ -141,10 +107,224 @@ const FloatingMathParticles = () => {
   );
 };
 
+// --- NEW: ANIMATED COUNTER ---
+const AnimatedCounter = ({ target, suffix = '' }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const duration = 1800;
+    const step = Math.ceil(target / (duration / 16));
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target]);
+
+  return <span>{count}{suffix}</span>;
+};
+
+// --- NEW: STATS BAR ---
+const StatsBar = () => {
+  const [inView, setInView] = useState(false);
+  const stats = [
+    { label: 'PYQs Archived', value: 100, suffix: '+' },
+    { label: 'Semesters Covered', value: 6, suffix: '' },
+    { label: 'Notes Uploaded', value: 20, suffix: '+' },
+    { label: 'Students Helped', value: 10, suffix: '+' },
+  ];
+
+  return (
+    <motion.section
+      onViewportEnter={() => setInView(true)}
+      viewport={{ once: true }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="py-16 px-6 border-y border-white/5 bg-white/[0.01]"
+    >
+      <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+        {stats.map((s, i) => (
+          <div key={i} className="text-center">
+            <p className="text-4xl md:text-5xl font-black tracking-tighter text-emerald-400 mb-2">
+              {inView ? <AnimatedCounter target={s.value} suffix={s.suffix} /> : `0${s.suffix}`}
+            </p>
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-stone-500">{s.label}</p>
+          </div>
+        ))}
+      </div>
+    </motion.section>
+  );
+};
+
+// --- NEW: WHAT'S INSIDE SECTION ---
+const FeaturesSection = () => {
+  const features = [
+    {
+      icon: <FileQuestion size={28} />,
+      title: "Previous Year Questions",
+      desc: "Semester-wise PYQs with solutions, sorted by subject and year. Stop hunting across drives.",
+    },
+    {
+      icon: <StickyNote size={28} />,
+      title: "Handwritten & Typed Notes",
+      desc: "Curated notes from toppers and seniors. Everything you need, nothing you don't.",
+    },
+    {
+      icon: <ClipboardList size={28} />,
+      title: "Syllabus & Structure",
+      desc: "Up-to-date syllabus breakdowns for every semester so you always know what's coming.",
+    },
+    {
+      icon: <Film size={28} />,
+      title: "Lecture References",
+      desc: "Handpicked YouTube playlists and lecture links mapped directly to your syllabus topics.",
+    },
+  ];
+
+  return (
+    <section className="py-32 px-6">
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="flex justify-between items-end mb-12 border-b border-white/5 pb-8"
+        >
+          <h2 className="text-4xl font-black tracking-tighter uppercase">What's <span className="text-emerald-500 italic">Inside</span></h2>
+          <p className="text-stone-500 text-[9px] font-black tracking-[0.4em] uppercase text-right">Everything. Organised.</p>
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-6"
+        >
+          {features.map((f, i) => (
+            <motion.div
+              key={i}
+              variants={fadeInUp}
+              className="group bg-white/[0.02] border border-white/5 p-8 rounded-3xl hover:border-emerald-500/30 hover:bg-[#111] transition-all relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-full h-full bg-emerald-500/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="w-14 h-14 bg-white/5 text-emerald-500 flex items-center justify-center rounded-2xl mb-6 group-hover:bg-emerald-500/10 transition-all">
+                {f.icon}
+              </div>
+              <h3 className="text-xl font-black tracking-tight uppercase mb-3">{f.title}</h3>
+              <p className="text-sm text-stone-500 leading-relaxed font-medium">{f.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- NEW: REVIEWS SECTION ---
+const ReviewsSection = ({ reviews, loading, navigate }) => {
+  if (loading) return null;
+  if (!reviews || reviews.length === 0) return null;
+
+  return (
+    <section className="py-32 px-6 bg-[#080808]/60">
+      <div className="max-w-5xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          className="flex justify-between items-end mb-12 border-b border-white/5 pb-8"
+        >
+          <h2 className="text-4xl font-black tracking-tighter uppercase">What They <span className="text-emerald-500 italic">Say</span></h2>
+          <button
+            onClick={() => navigate('/reviews')}
+            className="text-[9px] font-black uppercase tracking-[0.4em] text-stone-500 hover:text-emerald-400 transition-colors flex items-center gap-1"
+          >
+            All Reviews <ArrowUpRight size={12} />
+          </button>
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {reviews.map((review, i) => (
+            <motion.div
+              key={i}
+              variants={fadeInUp}
+              className="bg-white/[0.02] border border-white/5 p-8 rounded-3xl flex flex-col gap-5 hover:border-emerald-500/20 transition-all"
+            >
+              <div className="flex gap-1">
+                {Array.from({ length: 5 }).map((_, si) => (
+                  <Star
+                    key={si}
+                    size={14}
+                    className={si < (review.rating ?? 5) ? 'text-emerald-400 fill-emerald-400' : 'text-stone-700'}
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-stone-400 leading-relaxed font-medium flex-1">
+                "{review.text || review.review || review.message}"
+              </p>
+              <div className="border-t border-white/5 pt-4">
+                <p className="text-[11px] font-black uppercase tracking-widest text-white">
+                  {review.name || review.author || 'Anonymous'}
+                </p>
+                {(review.semester || review.year) && (
+                  <p className="text-[9px] font-black uppercase tracking-widest text-stone-600 mt-1">
+                    {review.semester ? `Semester ${review.semester}` : ''}{review.year ? ` • ${review.year}` : ''}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- NEW: SCROLL TO TOP BUTTON ---
+const ScrollToTop = () => {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-8 right-6 z-[200] w-12 h-12 bg-emerald-500 text-black rounded-xl flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:bg-emerald-400 active:scale-90 transition-all"
+          aria-label="Scroll to top"
+        >
+          <ChevronUp size={22} strokeWidth={3} />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const [siteReady, setSiteReady] = useState(false);
-  const [showRain, setShowRain] = useState(false);
   const [availableSemesters, setAvailableSemesters] = useState(() => {
     const saved = localStorage.getItem('vault_semesters');
     return saved ? JSON.parse(saved) : [];
@@ -158,9 +338,6 @@ const LandingPage = () => {
   const COMMUNITY_LINK = "https://chat.whatsapp.com/HbuIF5IrOQWKdCjOwRPkLJ";
 
   useEffect(() => {
-    // Send initial pageview to Analytics
-    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
-
     const fetchSemesters = async () => {
       const startTime = Date.now();
       if (availableSemesters.length === 0) setLoading(true);
@@ -179,12 +356,7 @@ const LandingPage = () => {
         setLoading(false);
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, 1000 - elapsed);
-        
-        setTimeout(() => {
-          setSiteReady(true);
-          setShowRain(true);
-          setTimeout(() => setShowRain(false), 4000);
-        }, remaining);
+        setTimeout(() => { setSiteReady(true); }, remaining);
       }
     };
 
@@ -216,11 +388,9 @@ const LandingPage = () => {
             key="content"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1.2 }}
+            transition={{ duration: 0.2 }}
             className="relative"
           >
-            {showRain && <SymbolRain />}
-            
             <div className="fixed inset-0 z-0 pointer-events-none">
               <FloatingMathParticles />
               <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full animate-pulse z-[-1]"></div>
@@ -243,7 +413,6 @@ const LandingPage = () => {
               </div>
 
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
-                {/* REPLACED Vaults with Motivation */}
                 <button onClick={() => navigate('/motivation')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">Motivation</button>
                 <a href="#about" className="flex items-center gap-2 hover:text-emerald-400 transition">
                   <Users size={14} /> CREATORS
@@ -251,7 +420,6 @@ const LandingPage = () => {
                 <button onClick={() => navigate('/reviews')} className="hover:text-emerald-400 transition uppercase tracking-[0.2em]">
                   Reviews
                 </button>
-                {/* NEW Contact Page Navigation */}
                 <button onClick={() => navigate('/contact')} className="bg-white text-black px-6 py-2 rounded-full hover:bg-emerald-400 transition-all active:scale-95 text-[11px] font-bold uppercase tracking-widest">CONTACT US</button>
               </div>
 
@@ -311,7 +479,7 @@ const LandingPage = () => {
                     BY THE STUDENTS. <br />FOR THE STUDENTS.
                   </motion.h1>
                   <motion.p variants={fadeInUp} className="text-lg text-stone-400 mb-12 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-wide text-[10px]">
-                    The high-performance repository for B.Sc Math Honors. <br />Every PYQ, Note, Syllabus, and Lecture in one clean space.
+                    The high-performance repository for B.Sc Mathematics Honors. <br />Every PYQ, Note, Syllabus, and Lecture in one clean space.
                   </motion.p>
                   <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row justify-center gap-6">
                     <a href="#resources" className="px-10 py-5 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-all shadow-[0_0_40_rgba(16,185,129,0.25)] active:scale-95 text-[10px] tracking-widest uppercase">Explore Vaults</a>
@@ -326,6 +494,12 @@ const LandingPage = () => {
                   </motion.div>
                 </motion.div>
               </header>
+
+              {/* --- NEW: STATS BAR --- */}
+              <StatsBar />
+
+              {/* --- NEW: WHAT'S INSIDE SECTION --- */}
+              <FeaturesSection />
 
               {/* --- SEMESTER VAULT SECTION --- */}
               <section id="resources" className="py-32 px-6 relative">
@@ -366,6 +540,9 @@ const LandingPage = () => {
                 </div>
               </section>
 
+              {/* --- NEW: REVIEWS SECTION --- */}
+              <ReviewsSection reviews={reviews} loading={reviewsLoading} navigate={navigate} />
+
               {/* --- ABOUT US / THE TEAM SECTION --- */}
               <section id="about" className="py-52 px-6 relative bg-[#080808]/50">
                 <div className="max-w-7xl mx-auto relative">
@@ -380,9 +557,17 @@ const LandingPage = () => {
                     </motion.div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                        {/* UPDATED: Creator links redirecting to GitHub */}
                         <motion.div 
-                            onClick={() => window.open('https://github.com/aryajidhruv', '_blank')}
+                            onClick={
+                              () => {
+                                ReactGA.event({
+                                    category: "Social",
+                                    action: "github_click",
+                                    label: "Dhrub Arya"
+                                });
+                                window.open('https://github.com/aryajidhruv', '_blank')
+                              }
+                            }
                             initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden cursor-pointer"
@@ -395,7 +580,15 @@ const LandingPage = () => {
                         </motion.div>
 
                         <motion.div 
-                            onClick={() => window.open('https://github.com/aditya7balotra', '_blank')} // Replace with Aditya's GitHub
+                            onClick={() => {
+                              ReactGA.event({
+                                  category: "Social",
+                                  action: "github_click",
+                                  label: "Aditya Balotra"
+                              });
+                              window.open('https://github.com/aditya7balotra', '_blank')
+                              }
+                            } 
                             initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             className="p-16 bg-white/[0.02] border border-white/10 rounded-[4rem] hover:border-emerald-500/40 transition-all group backdrop-blur-xl relative overflow-hidden cursor-pointer"
@@ -445,6 +638,9 @@ const LandingPage = () => {
                 </div>
               </footer>
             </div>
+
+            {/* --- NEW: SCROLL TO TOP --- */}
+            <ScrollToTop />
           </motion.div>
         )}
       </AnimatePresence>

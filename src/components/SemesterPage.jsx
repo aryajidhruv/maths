@@ -61,36 +61,6 @@ const VaultLoader = () => (
   </motion.div>
 );
 
-const SymbolRain = () => {
-  const rainParticles = useMemo(() => {
-    return Array.from({ length: 80 }).map((_, i) => ({
-      id: i,
-      char: MATH_SYMBOLS[Math.floor(Math.random() * MATH_SYMBOLS.length)],
-      left: `${Math.random() * 100}%`,
-      delay: Math.random() * 0.5,
-      duration: 1.2 + Math.random() * 1.5,
-      size: 12 + Math.random() * 30,
-    }));
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-[900] pointer-events-none overflow-hidden">
-      {rainParticles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ y: -100, opacity: 0 }}
-          animate={{ y: ['0vh', '115vh'], opacity: [0, 1, 0.5, 0] }}
-          transition={{ duration: p.duration, delay: p.delay, ease: "circIn" }}
-          className="absolute font-serif text-emerald-500/40"
-          style={{ left: p.left, fontSize: p.size }}
-        >
-          {p.char}
-        </motion.div>
-      ))}
-    </div>
-  );
-};
-
 const FloatingMathParticles = () => {
   const particles = useMemo(() => {
     return Array.from({ length: 25 }).map((_, i) => ({
@@ -131,7 +101,7 @@ const SemesterPage = () => {
   const navigate = useNavigate();
   
   const [siteReady, setSiteReady] = useState(false);
-  const [showRain, setShowRain] = useState(false);
+ 
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -201,7 +171,7 @@ const SemesterPage = () => {
             transition={{ duration: 1.2 }}
             className="relative"
           >
-            {showRain && <SymbolRain />}
+            
             
             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
               <FloatingMathParticles />
