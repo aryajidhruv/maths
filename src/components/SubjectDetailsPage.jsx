@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, Sparkles, ChevronRight, Download, Eye 
+  ArrowLeft, BookOpen, PlayCircle, FileText, Loader2, X, Sparkles, ChevronRight, Download 
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -14,7 +14,6 @@ const SubjectDetailsPage = () => {
   const { state } = useLocation();
   const subjectName = state?.subjectName || "Subject Details";
 
-  // Sanitize subjectId for backend (removes prefixes like 'h:' and converts to integer)
   const cleanCoreId = subjectId ? parseInt(subjectId.replace(/\D/g, ''), 10) : null;
 
   const [units, setUnits] = useState([]);
@@ -31,13 +30,11 @@ const SubjectDetailsPage = () => {
       setLoadingUnits(true);
       setLoadingYears(true);
       try {
-        // Fetch Units Metadata
         const unitRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'units', core_id: cleanCoreId }
         });
         setUnits(Array.isArray(unitRes.data) ? unitRes.data : Object.values(unitRes.data));
 
-        // Fetch PYQ Metadata
         const pyqRes = await axios.get(`${API_BASE_URL}/metadata/maths`, {
           params: { of: 'pyqs', core_id: cleanCoreId }
         });
@@ -53,19 +50,15 @@ const SubjectDetailsPage = () => {
     fetchData();
   }, [cleanCoreId]);
 
-  /**
-   * STAGE 1: AUTH INITIALIZATION
-   */
   const getAuthToken = async (resourceType) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/init`, null, {
         params: {
           discipline: 'maths',
-          core_id: cleanCoreId.toString(), // Schema says string for this endpoint
+          core_id: cleanCoreId.toString(),
           type: resourceType
         }
       });
-      // Adjusting to standard JWT responses: check for access_token or the raw string
       return response.data.access_token || response.data;
     } catch (err) {
       console.error("Secure Session Initialization Failed:", err.response?.data || err);
@@ -73,21 +66,15 @@ const SubjectDetailsPage = () => {
     }
   };
 
-  /**
-   * STAGE 2: AUTHORIZED RESOURCE ACCESS
-   */
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
-
     ReactGA.event({
       category: "Resource Access",
-      action: `${type}_${mode}`, // e.g., "notes_download" or "syllabus_preview"
+      action: `${type}_${mode}`,
       label: `${subjectName} ${unitNo ? '- Unit ' + unitNo : ''} ${year ? '- Year ' + year : ''}`,
     });
     setActionLoading(true);
     try {
-      
       const resourceType = type === 'videos' ? 'v_refs' : type;
-      
       const token = await getAuthToken(resourceType);
       
       if (!token) {
@@ -95,16 +82,14 @@ const SubjectDetailsPage = () => {
         return;
       }
 
-      // The schema for resources requires core_id as a path parameter (integer)
       const url = `${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`;
-      
       const response = await axios.get(url, {
         params: { 
           unit: unitNo || undefined, 
           yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token.token}`, // token is usually the string itself from init
+          'Authorization': `Bearer ${token.token}`,
           'Accept': 'application/json' 
         }
       });
@@ -116,12 +101,7 @@ const SubjectDetailsPage = () => {
         return;
       }
 
-      if (mode === 'download') {
-        // Direct download logic
-        window.open(resourceUrl, '_blank');
-      } else {
-        window.open(resourceUrl, '_blank');
-      }
+      window.open(resourceUrl, '_blank');
     } catch (err) {
       console.error("Vault Access Error:", err.response?.data || err);
       alert("Resoure not found");
@@ -133,7 +113,6 @@ const SubjectDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
-      {/* Background Decor */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px]" />
       </div>
@@ -148,7 +127,6 @@ const SubjectDetailsPage = () => {
         </div>
       </nav>
 
-      {/* Auth Loader */}
       <AnimatePresence>
         {actionLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center">
@@ -216,22 +194,15 @@ const SubjectDetailsPage = () => {
                     
                     <div className="flex flex-wrap gap-3 lg:ml-auto">
                       <button 
-                        onClick={() => handleResourceAccess('notes', i + 1, null, 'preview')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
-                      >
-                        <Eye size={16} /> Preview
-                      </button>
-                      
-                      <button 
                         onClick={() => handleResourceAccess('notes', i + 1, null, 'download')} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-4 bg-emerald-600 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
                       >
                         <Download size={16} /> Download
                       </button>
 
                       <button 
                         onClick={() => handleResourceAccess('videos', i + 1)} 
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-white/5 border border-white/10 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-8 py-4 bg-white/5 border border-white/10 text-stone-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all"
                       >
                         <PlayCircle size={16} /> Video
                       </button>
@@ -244,7 +215,6 @@ const SubjectDetailsPage = () => {
         </section>
       </main>
 
-      {/* PYQ Modal */}
       <AnimatePresence>
         {isYearModalOpen && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
