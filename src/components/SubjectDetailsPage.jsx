@@ -124,7 +124,7 @@ const SubjectDetailsPage = () => {
       }
     } catch (err) {
       console.error("Vault Access Error:", err.response?.data || err);
-      alert("Authentication failed or resource is restricted.");
+      alert("Resoure not found");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);

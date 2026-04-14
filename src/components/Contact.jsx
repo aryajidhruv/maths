@@ -316,7 +316,7 @@ const ContactPage = () => {
             {/* Email */}
             <motion.a
               variants={fadeInUp}
-              href="mailto:mathvault.du@gmail.com"
+              href="mailto:aryajiidhruv@gmail.com,mr.balotra4@gmail.com"
               whileHover={{ y: -5, scale: 1.01 }}
               className="group p-10 bg-white/[0.02] border border-white/5 rounded-[2.5rem] hover:border-emerald-500/35 hover:bg-[#0f0f0f] transition-all block"
             >
@@ -329,7 +329,7 @@ const ContactPage = () => {
                 Best for anything that needs context — broken resources, files to add, or joining the team.
               </p>
               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 group-hover:text-emerald-300 transition-colors">
-                mathvault.du@gmail.com <ArrowUpRight size={13} />
+                MathVaultemail.com <ArrowUpRight size={13} />
               </div>
             </motion.a>
 
