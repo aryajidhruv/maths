@@ -11,7 +11,7 @@ import Motivation from './components/Motivation';
 import Contact from './components/Contact';
 
 // This is correct - initialized once outside
-const TRACKING_ID = "G-9JDG6LLSQ8"; 
+const TRACKING_ID = "G-JHYM47YGC9"; 
 ReactGA.initialize(TRACKING_ID);
 
 function App() {

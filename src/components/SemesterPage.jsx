@@ -146,8 +146,8 @@ const SemesterPage = () => {
         setTimeout(() => {
           setLoading(false);
           setSiteReady(true);
-          setShowRain(true);
-          setTimeout(() => setShowRain(false), 4000);
+          // setShowRain(true);
+          // setTimeout(() => setShowRain(false), 4000);
         }, remaining);
       }
     };

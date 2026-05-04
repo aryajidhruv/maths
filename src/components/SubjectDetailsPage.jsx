@@ -59,6 +59,7 @@ const SubjectDetailsPage = () => {
           type: resourceType
         }
       });
+      // Handle both object and string responses
       return response.data.access_token || response.data;
     } catch (err) {
       console.error("Secure Session Initialization Failed:", err.response?.data || err);
@@ -67,20 +68,32 @@ const SubjectDetailsPage = () => {
   };
 
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
-    ReactGA.event({
-      category: "Resource Access",
-      action: `${type}_${mode}`,
-      label: `${subjectName} ${unitNo ? '- Unit ' + unitNo : ''} ${year ? '- Year ' + year : ''}`,
+    ReactGA.event("resource_access", {
+      resource_type: type,
+      access_mode: mode,
+      subject: subjectName,
+      unit: unitNo || "N/A",
+      year: year || "N/A"
     });
+
     setActionLoading(true);
+
+    // SAFARI OPTIMIZATION: Open a blank tab immediately for non-video resources.
+    // Safari blocks window.open if it happens after an 'await' (async) call.
+    const newWindow = type !== 'videos' ? window.open('', '_blank') : null;
+
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
-      const token = await getAuthToken(resourceType);
+      const tokenResponse = await getAuthToken(resourceType);
       
-      if (!token) {
+      if (!tokenResponse) {
+        if (newWindow) newWindow.close();
         alert("Security Error: Access token could not be verified.");
         return;
       }
+
+      // Extract the actual token string. Adjust this if your backend returns a plain string.
+      const token = typeof tokenResponse === 'object' ? tokenResponse.token : tokenResponse;
 
       const url = `${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`;
       const response = await axios.get(url, {
@@ -89,22 +102,30 @@ const SubjectDetailsPage = () => {
           yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token.token}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json' 
         }
       });
 
-      const resourceUrl = type == "v_refs" ? response.data?.resource_url?.[0] : response.data?.resource_url;
+      const resourceUrl = type === 'videos' ? response.data?.resource_url?.[0] : response.data?.resource_url;
 
       if (!resourceUrl) {
+        if (newWindow) newWindow.close();
         alert("The requested node is empty in the vault.");
         return;
       }
 
-      window.open(resourceUrl, '_blank');
+      // If we opened a window earlier, redirect it. Otherwise, open a new one.
+      if (newWindow) {
+        newWindow.location.href = resourceUrl;
+      } else {
+        window.open(resourceUrl, '_blank');
+      }
+
     } catch (err) {
+      if (newWindow) newWindow.close();
       console.error("Vault Access Error:", err.response?.data || err);
-      alert("Resoure not found");
+      alert("Resource not found or access denied.");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
@@ -113,6 +134,7 @@ const SubjectDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-emerald-500/30 font-sans pb-24">
+      {/* Background Glow */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-900/10 rounded-full blur-[120px]" />
       </div>

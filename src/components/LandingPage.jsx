@@ -560,10 +560,9 @@ const LandingPage = () => {
                         <motion.div 
                             onClick={
                               () => {
-                                ReactGA.event({
-                                    category: "Social",
-                                    action: "github_click",
-                                    label: "Dhrub Arya"
+                                ReactGA.event("github_click", {
+                                  person: "Dhrub Arya",
+                                  platform: "github"
                                 });
                                 window.open('https://github.com/aryajidhruv', '_blank')
                               }
@@ -581,10 +580,9 @@ const LandingPage = () => {
 
                         <motion.div 
                             onClick={() => {
-                              ReactGA.event({
-                                  category: "Social",
-                                  action: "github_click",
-                                  label: "Aditya Balotra"
+                              ReactGA.event("github_click", {
+                                person: "Dhrub Arya",
+                                platform: "github"
                               });
                               window.open('https://github.com/aditya7balotra', '_blank')
                               }
