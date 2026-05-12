@@ -98,7 +98,7 @@ const SubjectDetailsPage = () => {
         params: { 
           unit: unitNo || undefined, 
           yr: year || undefined,
-          mode: mode // Applying 'preview' or 'download' here
+         // Applying 'preview' or 'download' here
         },
         headers: { 
           'Authorization': `Bearer ${token}`,
