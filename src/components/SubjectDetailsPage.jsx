@@ -76,56 +76,52 @@ const SubjectDetailsPage = () => {
    * Access handler using the new 'mode' parameter
    */
   const handleResourceAccess = async (type, unitNo = null, year = null, mode = 'preview') => {
-    ReactGA.event("resource_access", { type, mode, subject: subjectName });
+    // ReactGA.event({
+    //   category: "Resource Access",
+    //   action: `${type}_${mode}`,
+    //   label: `${subjectName} ${unitNo ? '- Unit ' + unitNo : ''} ${year ? '- Year ' + year : ''}`,
+    // });
 
+    ReactGA.event("resource_access", {
+      resource_type: type, // 'videos', 'notes', 'pyqs'
+      access_mode: mode,   // 'preview', 'download'
+      subject_name: subjectName,
+      unit_number: unitNo || 'N/A',
+      year: year || 'N/A'
+    });
     setActionLoading(true);
-    // Safari/Mobile Fix: Open blank tab before the async call
-    const newWindow = type !== 'videos' ? window.open('', '_blank') : null;
-
     try {
       const resourceType = type === 'videos' ? 'v_refs' : type;
-      const tokenResponse = await getAuthToken(resourceType);
+      const token = await getAuthToken(resourceType);
       
-      if (!tokenResponse) {
-        if (newWindow) newWindow.close();
-        alert("Authorization failed.");
+      if (!token) {
+        alert("Security Error: Access token could not be verified.");
         return;
       }
 
-      const token = typeof tokenResponse === 'object' ? tokenResponse.token : tokenResponse;
-
-      const response = await axios.get(`${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`, {
+      const url = `${API_BASE_URL}/resource/maths/${cleanCoreId}/${resourceType}`;
+      const response = await axios.get(url, {
         params: { 
           unit: unitNo || undefined, 
-          yr: year || undefined,
-         // Applying 'preview' or 'download' here
+          yr: year || undefined 
         },
         headers: { 
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token.token}`,
           'Accept': 'application/json' 
         }
       });
 
-      const resourceUrl = type === 'videos' 
-        ? (Array.isArray(response.data?.resource_url) ? response.data.resource_url[0] : response.data?.resource_url)
-        : response.data?.resource_url;
+      const resourceUrl = type == "v_refs" ? response.data?.resource_url?.[0] : response.data?.resource_url;
 
       if (!resourceUrl) {
-        if (newWindow) newWindow.close();
-        alert("Resource not found.");
+        alert("The requested node is empty in the vault.");
         return;
       }
 
-      if (newWindow) {
-        newWindow.location.href = resourceUrl;
-      } else {
-        window.open(resourceUrl, '_blank');
-      }
-
+      window.open(resourceUrl, '_blank');
     } catch (err) {
-      if (newWindow) newWindow.close();
-      console.error("Vault Access Error:", err);
-      alert("Access Denied.");
+      console.error("Vault Access Error:", err.response?.data || err);
+      alert("Resoure not found");
     } finally {
       setActionLoading(false);
       setIsYearModalOpen(false);
