@@ -409,7 +409,7 @@ const LandingPage = () => {
             >
               <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({top:0, behavior:'smooth'})}>
                 <div className="w-9 h-9 bg-emerald-600 text-white flex items-center justify-center rounded-lg font-black text-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-all">∆</div>
-                <span className="text-xl font-black tracking-tighter uppercase">MathVault</span>
+                <span className="text-xl font-black tracking-tighter uppercase">fjkjd</span>
               </div>
 
               <div className="hidden md:flex items-center gap-10 text-[10px] font-black uppercase tracking-[0.2em] text-stone-400">
