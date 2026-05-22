@@ -4,38 +4,97 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Favicon (moved to /public so Vite serves it correctly) -->
+    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" href="/image.jpeg" />
 
-    <!-- Primary SEO -->
-    <title>MathVault — B.Sc Mathematics Honors | Rajdhani College, DU</title>
-    <meta name="description" content="The high-performance study vault for B.Sc Mathematics Honors at Rajdhani College, DU. Every PYQ, note, syllabus, and lecture — in one clean space. Built by students, for students." />
-    <meta name="keywords" content="MathVault, Rajdhani College, Delhi University, B.Sc Mathematics, PYQ, previous year questions, maths notes, DU maths, semester notes" />
-    <meta name="author" content="Dhruv Arya, Aditya Balotra" />
-    <meta name="robots" content="index, follow" />
+    <!-- Primary SEO — keyword-heavy, search-intent focused -->
+    <title>MathVault | DU B.Sc Maths Honors PYQ, Notes & Syllabus — Rajdhani College Delhi University</title>
+    <meta name="description" content="Free PYQs, notes, syllabus, and video lectures for B.Sc Mathematics Honors at Delhi University. All semesters covered — Sem 1 to Sem 6. Built by Rajdhani College DU students." />
+    <meta name="keywords" content="
+      DU maths PYQ, Delhi University mathematics previous year questions,
+      B.Sc Mathematics Honors Delhi University, Rajdhani College maths notes,
+      DU maths semester 1 2 3 4 5 6 notes, Delhi University maths syllabus 2024 2025,
+      maths honors DU notes free download, DU maths question papers,
+      real analysis notes DU, abstract algebra DU, linear algebra DU notes,
+      differential equations DU, numerical analysis DU, topology DU notes,
+      Rajdhani College Delhi, CBCS maths DU, NEP maths Delhi University,
+      MathVault, xuzu.in, DU study material, Delhi University exam preparation
+    " />
+    <meta name="author" content="Dhruv Arya, Aditya Balotra — Rajdhani College, University of Delhi" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
     <link rel="canonical" href="https://www.xuzu.in/" />
 
-    <!-- Open Graph (WhatsApp, LinkedIn, Facebook previews) -->
+    <!-- Geo targeting — tells Google this is for India/Delhi -->
+    <meta name="geo.region" content="IN-DL" />
+    <meta name="geo.placename" content="Delhi, India" />
+    <meta name="language" content="English" />
+
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.xuzu.in/" />
-    <meta property="og:title" content="MathVault — B.Sc Mathematics Honors | Rajdhani College, DU" />
-    <meta property="og:description" content="Every PYQ, note, syllabus, and lecture for B.Sc Mathematics Honors at Rajdhani College. Built by students, for students." />
+    <meta property="og:title" content="MathVault | Free DU B.Sc Maths PYQ, Notes & Syllabus" />
+    <meta property="og:description" content="Free PYQs, notes, syllabus, and video lectures for B.Sc Mathematics Honors at Delhi University. All semesters. Built by DU students." />
     <meta property="og:image" content="https://www.xuzu.in/og-image.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="MathVault — DU Mathematics Study Vault" />
     <meta property="og:site_name" content="MathVault" />
     <meta property="og:locale" content="en_IN" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://www.xuzu.in/" />
-    <meta name="twitter:title" content="MathVault — B.Sc Mathematics Honors | Rajdhani College, DU" />
-    <meta name="twitter:description" content="Every PYQ, note, syllabus, and lecture for B.Sc Mathematics Honors at Rajdhani College. Built by students, for students." />
+    <meta name="twitter:title" content="MathVault | Free DU B.Sc Maths PYQ, Notes & Syllabus" />
+    <meta name="twitter:description" content="Free PYQs, notes, syllabus, and video lectures for B.Sc Maths Honors at Delhi University. All semesters covered." />
     <meta name="twitter:image" content="https://www.xuzu.in/og-image.jpg" />
 
-    <!-- Theme & App -->
+    <!-- Theme -->
     <meta name="theme-color" content="#10b981" />
     <meta name="application-name" content="MathVault" />
+
+    <!-- Structured Data (JSON-LD) — Google rich results -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "MathVault",
+      "url": "https://www.xuzu.in/",
+      "description": "Free PYQs, notes, syllabus, and video lectures for B.Sc Mathematics Honors at Delhi University.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.xuzu.in/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "MathVault",
+      "url": "https://www.xuzu.in/",
+      "description": "A student-built study vault for B.Sc Mathematics Honors at Rajdhani College, University of Delhi.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "New Delhi",
+        "addressRegion": "Delhi",
+        "addressCountry": "IN"
+      },
+      "knowsAbout": [
+        "B.Sc Mathematics Honors",
+        "Delhi University Mathematics",
+        "Previous Year Question Papers",
+        "Real Analysis",
+        "Abstract Algebra",
+        "Linear Algebra",
+        "Differential Equations",
+        "Numerical Analysis",
+        "Topology"
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
