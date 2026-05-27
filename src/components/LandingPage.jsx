@@ -322,6 +322,46 @@ const ScrollToTop = () => {
   );
 };
 
+
+// --- REVIEW CTA (fake input that redirects) ---
+const ReviewCTA = ({ navigate }) => (
+  <motion.section
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.6 }}
+    className="py-20 px-6"
+  >
+    <div className="max-w-3xl mx-auto">
+      <p className="text-center text-[9px] font-black uppercase tracking-[0.5em] text-stone-600 mb-5">
+        Loved the Vault? Let the next student know.
+      </p>
+      <div
+        onClick={() => navigate('/reviews')}
+        className="group cursor-text w-full bg-white/[0.03] border border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.05] transition-all rounded-2xl px-8 py-6 flex items-center justify-between gap-4"
+      >
+        <div className="flex items-center gap-4 flex-1 min-w-0">
+          <MessageSquareQuote size={18} className="text-stone-600 group-hover:text-emerald-500 transition-colors shrink-0" />
+          <span className="text-stone-600 group-hover:text-stone-400 transition-colors text-sm font-medium truncate">
+            Share your experience with MathVault...
+          </span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map(s => (
+              <Star key={s} size={12} className="text-stone-700 group-hover:text-emerald-500/60 transition-colors fill-current" />
+            ))}
+          </div>
+          <div className="px-4 py-2 bg-emerald-500 text-black rounded-xl text-[9px] font-black uppercase tracking-widest group-hover:bg-emerald-400 transition-all">
+            Write
+          </div>
+        </div>
+      </div>
+    </div>
+  </motion.section>
+);
+
+
 const LandingPage = () => {
   const navigate = useNavigate();
   const [siteReady, setSiteReady] = useState(false);
@@ -500,6 +540,9 @@ const LandingPage = () => {
 
               {/* --- NEW: WHAT'S INSIDE SECTION --- */}
               <FeaturesSection />
+
+              {/* --- REVIEW CTA --- */}
+              <ReviewCTA navigate={navigate} />
 
               {/* --- SEMESTER VAULT SECTION --- */}
               <section id="resources" className="py-32 px-6 relative">
